@@ -1,45 +1,45 @@
-# Domain Model v0
-### Phase 1: Shuttle3D + HybridLift + Load / Unload Stations
+# Доменная модель v0
+### Текущий базовый состав: 3D-шаттл + гибридный лифт + станции загрузки и выгрузки
 
 **Статус:** Черновик v0  
 **Последнее обновление:** 2026-04-03  
-**Связанные артефакты:** ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, ADR-001, ADR-002, ADR-003, ADR-004
+**Связанные артефакты:** Glossary, ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, ADR-001, ADR-002, ADR-003, ADR-004
 
 ---
 
 ## 1. Назначение
 
-`DomainModel-v0` фиксирует минимальную предметную модель, достаточную для начала реализации Phase 1 без выбранного конечного железа.
+`DomainModel-v0` фиксирует минимальную предметную модель, достаточную для начала реализации текущего базового состава системы без выбранного конечного железа.
 
-Модель не пытается заранее описать все будущие семейства устройств. Она задаёт только те сущности и инварианты, без которых нельзя писать `WES`, `WCS`, симулятор и ACL.
+Модель не пытается заранее описать все будущие семейства устройств. Она задаёт только те сущности и инварианты, без которых нельзя разрабатывать `WES`, `WCS`, имитационную модель и адаптерный слой изоляции.
 
 ---
 
 ## 2. Граница модели
 
-Phase 1 покрывает:
+Текущий базовый состав покрывает:
 
-- `Shuttle3D`
-- `HybridLift` как реализацию `VerticalCarrier`
-- `LoadStation`
-- `UnloadStation`
-- payload transfer от зоны загрузки до зоны выгрузки
-- inter-level transfer через `HybridLift`
+- `Shuttle3D`;
+- `HybridLift` как реализацию `VerticalCarrier`;
+- `LoadStation`;
+- `UnloadStation`;
+- передачу грузовой единицы от зоны загрузки до зоны выгрузки;
+- межуровневую передачу через `HybridLift`.
 
-Phase 1 не покрывает подробно:
+Текущий базовый состав не описывает подробно:
 
-- `DirectStorageCrane`
-- `payload-only transfer mode for VerticalCarrier`
-- многоместные carrier
-- WMS inventory semantics
+- `DirectStorageCrane`;
+- режим передачи грузовой единицы без въезда шаттла для `VerticalCarrier`;
+- многоместные вертикальные перевозчики;
+- семантику складского учёта уровня WMS.
 
 ---
 
 ## 3. Основные сущности
 
-### 3.1. Job
+### 3.1. `Job`
 
-`Job` — макро-намерение платформы.
+`Job` — задание верхнего уровня, выражающее макронамерение платформы.
 
 ```text
 Job {
@@ -56,11 +56,11 @@ Job {
 
 Свойства:
 
-- создаётся и владеется `WES`;
+- создаётся и поддерживается `WES`;
 - может содержать несколько `ExecutionTask`;
 - не передаётся между устройствами в ходе исполнения.
 
-### 3.2. Payload
+### 3.2. `Payload`
 
 `Payload` — физическая единица груза.
 
@@ -77,10 +77,10 @@ Payload {
 
 Свойства:
 
-- для Phase 1 платформа отслеживает custody и location только в объёме, нужном для исполнения маршрута;
-- `custodyHolder` в нормальном режиме единственный.
+- платформа отслеживает местонахождение и физическое удержание груза в объёме, необходимом для исполнения маршрута;
+- в нормальном режиме у грузовой единицы один текущий держатель.
 
-### 3.3. ExecutionTask
+### 3.3. `ExecutionTask`
 
 `ExecutionTask` — атомарный шаг исполнения.
 
@@ -98,7 +98,7 @@ ExecutionTask {
 }
 ```
 
-Поддерживаемые `taskType` в Phase 1:
+Поддерживаемые `taskType` в текущем базовом составе:
 
 - `Navigate`
 - `LoadFromStation`
@@ -113,11 +113,11 @@ ExecutionTask {
 
 - создаётся `WES`;
 - исполняется и материализуется `WCS`;
-- в каждый момент времени принадлежит одному assignee.
+- в каждый момент времени назначается одному исполнителю.
 
-### 3.4. Device
+### 3.4. `Device`
 
-Базовая сущность всех активных ресурсов.
+`Device` — базовая сущность всех активных ресурсов.
 
 ```text
 Device {
@@ -130,7 +130,7 @@ Device {
 }
 ```
 
-### 3.5. Shuttle3D
+### 3.5. `Shuttle3D`
 
 ```text
 Shuttle3D extends Device {
@@ -143,11 +143,11 @@ Shuttle3D extends Device {
 
 Смысл:
 
-- основной мобильный ресурс Phase 1;
-- в `AUTONOMOUS` выполняет движение по уровневому графу;
-- в `CARRIER_PASSENGER` наследует положение от vertical carrier.
+- основной мобильный ресурс текущего базового состава;
+- в режиме `AUTONOMOUS` выполняет движение по уровневому графу;
+- в режиме `CARRIER_PASSENGER` наследует своё положение от вертикального перевозчика.
 
-### 3.6. VerticalCarrier / HybridLift
+### 3.6. `VerticalCarrier` / `HybridLift`
 
 ```text
 VerticalCarrier extends Device {
@@ -165,10 +165,10 @@ HybridLift extends VerticalCarrier {
 Смысл:
 
 - вертикальный перевозчик является активным ресурсом;
-- в Phase 1 он перевозит шаттл вместе с удерживаемым payload;
+- в текущем базовом составе он перевозит шаттл вместе с удерживаемой им грузовой единицей;
 - не владеет `Job`.
 
-### 3.7. Station
+### 3.7. `Station`
 
 ```text
 Station {
@@ -182,14 +182,14 @@ Station {
 
 Смысл:
 
-- station является доменной сущностью на границе платформы;
-- handoff со station всегда проходит через явный `ExecutionTask` и подтверждённый transfer.
+- станция является доменной сущностью на границе платформы;
+- операция передачи со станцией всегда проходит через явный `ExecutionTask` и подтверждённую фиксацию передачи.
 
 ---
 
 ## 4. Топологические сущности
 
-### 4.1. Node
+### 4.1. `Node`
 
 ```text
 Node {
@@ -199,7 +199,7 @@ Node {
 }
 ```
 
-Поддерживаемые `nodeType` в Phase 1:
+Поддерживаемые `nodeType` в текущем базовом составе:
 
 - `TravelNode`
 - `SwitchNode`
@@ -209,7 +209,7 @@ Node {
 - `ChargeNode`
 - `ServiceNode`
 
-### 4.2. Edge
+### 4.2. `Edge`
 
 ```text
 Edge {
@@ -227,7 +227,7 @@ Edge {
 - `CARRIER_ONLY`
 - `RESTRICTED`
 
-### 4.3. Reservation
+### 4.3. `Reservation`
 
 ```text
 Reservation {
@@ -243,13 +243,13 @@ Reservation {
 Смысл:
 
 - `PLAN` используется как плановый контекст маршрута;
-- `EXECUTION` используется для short-horizon reservations и sliding window.
+- `EXECUTION` используется для краткосрочных резервирований и скользящего окна резервирования.
 
 ---
 
 ## 5. Операционные сущности
 
-### 5.1. DeviceSession
+### 5.1. `DeviceSession`
 
 ```text
 DeviceSession {
@@ -263,7 +263,7 @@ DeviceSession {
 
 `DeviceSession` материализуется в `WCS` и не принадлежит `WES`.
 
-### 5.2. Fault
+### 5.2. `Fault`
 
 ```text
 Fault {
@@ -276,9 +276,9 @@ Fault {
 }
 ```
 
-`Fault` может приводить к деградации capabilities, quarantine topology и приостановке `ExecutionTask`.
+`Fault` может приводить к деградации возможностей, карантинной изоляции участков топологии и приостановке `ExecutionTask`.
 
-### 5.3. CapabilitySet
+### 5.3. `CapabilitySet`
 
 ```text
 CapabilitySet {
@@ -287,7 +287,7 @@ CapabilitySet {
 }
 ```
 
-Статические и активные capabilities разделяются. Именно `activeCapabilities` используются при выборе ресурса и исполнении.
+Статические и активные возможности разделяются. Именно `activeCapabilities` используются при выборе ресурса и исполнении.
 
 ---
 
@@ -296,31 +296,31 @@ CapabilitySet {
 1. `WES` — единственный владелец `Job`.
 2. `WCS` — владелец фактического исполнения `ExecutionTask`.
 3. `ACL` не создаёт `Job` и `ExecutionTask`.
-4. `Payload` имеет одного текущего custody holder в нормальном режиме.
+4. `Payload` имеет одного текущего держателя в нормальном режиме.
 5. `Shuttle3D.movementMode = CARRIER_PASSENGER` => `carrierId != null`.
 6. `Shuttle3D.dispatchStatus = AVAILABLE` => у шаттла нет активного `ExecutionTask`.
-7. `HybridLift.slotCount = 1` в Phase 1.
+7. `HybridLift.slotCount = 1` в текущем базовом составе.
 8. `occupiedShuttleId != null` => второй шаттл не может войти в тот же `HybridLift`.
-9. Любой handoff между разными семействами проходит через `TransferPoint` или `StationNode` и подтверждённый transfer FSM.
-10. `SwitchNode` требует эксклюзивной execution-reservation.
+9. Любая операция передачи между разными семействами проходит через `TransferPoint` или `StationNode` и подтверждённый конечный автомат передачи.
+10. `SwitchNode` требует исключительного краткосрочного резервирования.
 
 ---
 
-## 7. Поддерживаемые сценарии Phase 1
+## 7. Поддерживаемые сценарии текущего базового состава
 
-### 7.1. Inbound flow
+### 7.1. Входной поток
 
 ```text
 LoadStation -> Shuttle3D -> HybridLift -> Shuttle3D -> UnloadStation
 ```
 
-### 7.2. Charge / service relocation
+### 7.2. Перемещение на зарядку или сервис
 
 ```text
 Shuttle3D -> HybridLift -> Shuttle3D -> ChargeNode / ServiceNode
 ```
 
-### 7.3. Empty repositioning
+### 7.3. Перераспределение пустого ресурса
 
 ```text
 Shuttle3D -> branch graph -> waiting area / transfer point
@@ -332,8 +332,8 @@ Shuttle3D -> branch graph -> waiting area / transfer point
 
 Следующие сущности и режимы будут добавляться отдельными решениями:
 
-- `DirectStorageCrane`
-- payload-only transfer mode for `VerticalCarrier`
-- multi-slot vertical carrier
-- station networks с собственной внутренней orchestration-логикой
-- vendor-specific дополнительные состояния, не попадающие в каноническое ядро
+- `DirectStorageCrane`;
+- режим передачи грузовой единицы без въезда шаттла для `VerticalCarrier`;
+- многоместный вертикальный перевозчик;
+- сети станций с собственной внутренней логикой оркестрации;
+- дополнительные вендорские состояния, не входящие в каноническое ядро.
