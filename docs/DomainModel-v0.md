@@ -3,7 +3,7 @@
 
 **Статус:** Черновик v0  
 **Последнее обновление:** 2026-04-03  
-**Связанные артефакты:** Glossary, ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, ADR-001, ADR-002, ADR-003, ADR-004
+**Связанные артефакты:** Glossary, ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006
 
 ---
 
@@ -21,8 +21,8 @@
 
 - `Shuttle3D`;
 - `HybridLift` как реализацию `VerticalCarrier`;
-- `LoadStation`;
-- `UnloadStation`;
+- пассивную `LoadStation`;
+- пассивную `UnloadStation`;
 - передачу грузовой единицы от зоны загрузки до зоны выгрузки;
 - межуровневую передачу через `HybridLift`.
 
@@ -82,7 +82,7 @@ Payload {
 
 ### 3.3. `ExecutionTask`
 
-`ExecutionTask` — атомарный шаг исполнения.
+`ExecutionTask` — плановый макрошаг исполнения.
 
 ```text
 ExecutionTask {
@@ -90,9 +90,11 @@ ExecutionTask {
   jobId
   assigneeType
   assigneeId
+  participantRefs[]
   taskType
   sourceNode?
   targetNode?
+  transferMode?
   state
   correlationId
 }
@@ -101,19 +103,16 @@ ExecutionTask {
 Поддерживаемые `taskType` в текущем базовом составе:
 
 - `Navigate`
-- `LoadFromStation`
-- `UnloadToStation`
-- `PrepareTransfer`
-- `CommitTransfer`
-- `BoardCarrier`
-- `MoveCarrier`
-- `ExitCarrier`
+- `StationTransfer`
+- `CarrierTransfer`
 
 Свойства:
 
-- создаётся `WES`;
-- исполняется и материализуется `WCS`;
-- в каждый момент времени назначается одному исполнителю.
+- создаётся `WES` как плановый макрошаг;
+- `assigneeId` указывает на основной ресурс исполнения, а `participantRefs` фиксирует обязательных участников операции;
+- исполняется и материализуется `WCS` во внутренние runtime-фазы и канонические команды нижнего уровня;
+- для `CarrierTransfer` внутренние runtime-фазы могут включать `PrepareTransfer`, `BoardCarrier`, `MoveCarrier`, `ExitCarrier`, `CommitTransfer`, `AbortTransfer`;
+- runtime-фазы `WCS` не являются самостоятельными плановыми `taskType` уровня `WES`.
 
 ### 3.4. `Device`
 
@@ -168,13 +167,14 @@ HybridLift extends VerticalCarrier {
 - в текущем базовом составе он перевозит шаттл вместе с удерживаемой им грузовой единицей;
 - не владеет `Job`.
 
-### 3.7. `Station`
+### 3.7. `StationBoundary` / `LoadStation` / `UnloadStation`
 
 ```text
-Station {
+StationBoundary {
   stationId
   stationType: LOAD | UNLOAD
   attachedNode
+  controlMode: PASSIVE | ACTIVE
   readiness: READY | BLOCKED | OFFLINE | MAINTENANCE
   bufferCapacity
 }
@@ -183,6 +183,8 @@ Station {
 Смысл:
 
 - станция является доменной сущностью на границе платформы;
+- в текущем базовом составе поддерживается только `controlMode = PASSIVE`;
+- пассивная граница станции не имеет собственного `DeviceSession` и не требует отдельного контроллера семейства ресурсов;
 - операция передачи со станцией всегда проходит через явный `ExecutionTask` и подтверждённую фиксацию передачи.
 
 ---
@@ -263,6 +265,8 @@ DeviceSession {
 
 `DeviceSession` материализуется в `WCS` и не принадлежит `WES`.
 
+Потеря активного `DeviceSession` во время исполнения переводит связанный `ExecutionTask` в `Suspended` до повторного согласования по `StateSnapshot`.
+
 ### 5.2. `Fault`
 
 ```text
@@ -298,11 +302,14 @@ CapabilitySet {
 3. `ACL` не создаёт `Job` и `ExecutionTask`.
 4. `Payload` имеет одного текущего держателя в нормальном режиме.
 5. `Shuttle3D.movementMode = CARRIER_PASSENGER` => `carrierId != null`.
-6. `Shuttle3D.dispatchStatus = AVAILABLE` => у шаттла нет активного `ExecutionTask`.
-7. `HybridLift.slotCount = 1` в текущем базовом составе.
-8. `occupiedShuttleId != null` => второй шаттл не может войти в тот же `HybridLift`.
-9. Любая операция передачи между разными семействами проходит через `TransferPoint` или `StationNode` и подтверждённый конечный автомат передачи.
-10. `SwitchNode` требует исключительного краткосрочного резервирования.
+6. `Shuttle3D.movementMode = CARRIER_PASSENGER` => `Shuttle3D.currentNode` наследуется от текущего `VerticalCarrier.currentNode`.
+7. `Shuttle3D.dispatchStatus = AVAILABLE` => у шаттла нет активного `ExecutionTask`.
+8. `HybridLift.slotCount = 1` в текущем базовом составе.
+9. `occupiedShuttleId != null` => второй шаттл не может войти в тот же `HybridLift`.
+10. В текущем базовом составе используется только `StationBoundary.controlMode = PASSIVE`.
+11. `CarrierTransfer` планируется в `WES` как макрошаг, а runtime-фазы `BoardCarrier` / `MoveCarrier` / `ExitCarrier` материализуются только внутри `WCS`.
+12. Любая операция передачи между разными семействами проходит через `TransferPoint` или `StationNode` и подтверждённый конечный автомат передачи.
+13. `SwitchNode` требует исключительного краткосрочного резервирования.
 
 ---
 

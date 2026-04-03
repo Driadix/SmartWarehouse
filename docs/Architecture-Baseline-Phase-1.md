@@ -3,7 +3,7 @@
 
 **Статус:** Базовый документ текущей реализации  
 **Последнее обновление:** 2026-04-03  
-**Связанные артефакты:** Glossary, ArchitecturalVision.md, ADR-001, ADR-002, ADR-003, ADR-004, DomainModel-v0
+**Связанные артефакты:** Glossary, ArchitecturalVision.md, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, DomainModel-v0
 
 ---
 
@@ -49,6 +49,11 @@
 - контроллер семейства `Shuttle3D`;
 - контроллер семейства `VerticalCarrier`;
 - специализированная логика станции допускается как отдельный модуль только в том случае, если станция имеет активное оборудование и собственный нижний сеанс управления.
+
+Для `Phase 1` принимается более узкое правило:
+
+- `LoadStation` и `UnloadStation` являются пассивными `StationBoundary`;
+- отдельный контроллер станции и отдельный нижний сеанс управления для станции не развёртываются.
 
 ---
 
@@ -106,6 +111,8 @@
 - обязательные `SwitchNode` для развилок и поворотов;
 - обязательные `TransferPoint` рядом с `CarrierNode` на каждом уровне;
 - обязательные `StationNode` для `LoadStation` и `UnloadStation`;
+- пассивные `LoadStation` и `UnloadStation`, в которых операция на границе станции не требует southbound-команд самой станции;
+- пассивные `ChargeNode` и `ServiceNode`, не являющиеся отдельными управляемыми станциями;
 - односекционный `HybridLift` с одним местом для шаттла.
 
 Ограничения базового состава:
@@ -130,6 +137,10 @@
 - при межуровневой передаче шаттл не становится владельцем `Job`;
 - `HybridLift` не получает владение `Job` и не получает физическое удержание груза;
 - `Shuttle3D` в режиме `CARRIER_PASSENGER` не получает самостоятельных команд движения.
+- `WES` планирует `ExecutionTask` макроуровня и фиксирует ресурсы, `transferMode` и топологические точки операции;
+- `WCS` материализует макрошаг во внутренние runtime-фазы и канонические команды нижнего уровня;
+- `WCS` не меняет самовольно выбранные `WES` ресурсы и глобальную цель маршрута; при невозможности продолжить исполнение он приостанавливает шаг и эскалирует перепланирование в `WES`.
+- потеря `DeviceSession` во время активного шага переводит `ExecutionTask` в `Suspended` до повторного согласования по `StateSnapshot`.
 
 ---
 
@@ -170,6 +181,8 @@ slotCount   = 1
 - `Digital Twin`
 - контур имитационного моделирования
 
+В текущем базовом составе не требуется отдельный логический контур активной станции, потому что станции работают как пассивные границы топологии.
+
 ---
 
 ## 9. Что не входит в текущий базовый состав
@@ -180,6 +193,7 @@ slotCount   = 1
 - `Shuttle1D`
 - режим передачи грузовой единицы без въезда шаттла для `VerticalCarrier`
 - многоместные вертикальные перевозчики
+- активные станции с собственным нижним сеансом управления
 - сети станций со сложной внутренней логикой исполнения
 - вендорские оптимизации, не выраженные через канонический нижний контракт интеграции
 
@@ -195,4 +209,6 @@ slotCount   = 1
 - [ADR-002-phase-1-scope-and-resource-families.md](/c:/Projects/SmartWarehouse/docs/ADR/ADR-002-phase-1-scope-and-resource-families.md)
 - [ADR-003-wes-wcs-acl-authority-model.md](/c:/Projects/SmartWarehouse/docs/ADR/ADR-003-wes-wcs-acl-authority-model.md)
 - [ADR-004-canonical-southbound-contract-v0.md](/c:/Projects/SmartWarehouse/docs/ADR/ADR-004-canonical-southbound-contract-v0.md)
+- [ADR-005-wes-planning-and-wcs-materialization.md](/c:/Projects/SmartWarehouse/docs/ADR/ADR-005-wes-planning-and-wcs-materialization.md)
+- [ADR-006-session-loss-recovery-and-reconciliation.md](/c:/Projects/SmartWarehouse/docs/ADR/ADR-006-session-loss-recovery-and-reconciliation.md)
 - [DomainModel-v0.md](/c:/Projects/SmartWarehouse/docs/DomainModel-v0.md)
