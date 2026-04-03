@@ -1,212 +1,245 @@
-# ADR-001: Модель лифта, режимы шаттла и трассируемость при межъярусных операциях
+# ADR-001: Hybrid lift transfer mode и shuttle-passenger state model для current baseline
+
+**Статус:** Принято  
+**Дата:** 2026-04-03  
+**Связанные артефакты:** ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, ADR-002, ADR-003, ADR-004, DomainModel-v0
 
 ---
 
 ## 1. Контекст
 
-### 1.1. Физическая конфигурация системы
+### 1.1. Phase 1 конфигурация
 
-Система «Умный склад» поддерживает гибкие конфигурации с несколькими ярусами, несколькими шаттлами и несколькими лифтами. Примеры реальных конфигураций, которые система обязана поддерживать:
+Phase 1 системы ориентирован на конфигурацию:
 
-- 4 яруса, 4 шаттла (по одному на ярус), 1 лифт (паллеты)
-- 4 яруса, 2 шаттла (мигрирующих между ярусами), 1 лифт (шаттлы + паллеты)
-- 4 яруса, N шаттлов, 2 лифта разных типов
+- `Shuttle3D` как основной исполнитель перемещения payload по ярусам;
+- `HybridLift` как реализация семейства `VerticalCarrier`;
+- `LoadStation` и `UnloadStation` как точки входа и выхода payload.
 
-### 1.2. Типы лифтов
+Первый поставляемый склад использует режим, в котором шаттл въезжает в `HybridLift` вместе с удерживаемым payload и покидает его на целевом уровне.
 
-В системе возможны лифты трёх классов:
+### 1.2. Проблемы, которые требуется решить
 
-| Класс | Описание |
-|---|---|
-| `PALLET_ONLY` | Перевозит только паллеты, шаттлы не могут войти в кабину |
-| `SHUTTLE_ONLY` | Перевозит только шаттлы (с грузом или без) |
-| `HYBRID` | Перевозит шаттлы и паллеты, один слот-кабина |
-
-Один склад может одновременно содержать лифты разных классов. Это определяется аппаратной конфигурацией при развёртывании.
-
-### 1.3. Проблемы, которые необходимо разрешить
-
-1. **Двойственная природа шаттла:** шаттл может быть одновременно исполнителем Job (агент) и пассивным объектом перевозки (груз внутри лифта). Одного атрибута `mode` недостаточно для описания этих состояний.
-
-2. **Трассируемость шаттла-пассажира:** когда шаттл находится внутри лифта, цифровой двойник и операционный мониторинг обязаны знать его местоположение.
-
-3. **Непрерывность Job при межъярусном перемещении:** если шаттл везёт паллету и вместе с ней едет в лифте, Job не прерывается — меняется только то, кто физически обеспечивает движение.
+1. **Двойственная роль шаттла:** шаттл остаётся активным ресурсом исполнения, но на время нахождения внутри lift перестаёт быть автономным источником движения.
+2. **Трассируемость:** Digital Twin и операционный мониторинг должны непрерывно знать местоположение шаттла во время vertical transfer.
+3. **Разделение ownership:** `Job` не должен «переезжать» между устройствами во время inter-level transfer.
+4. **Контроль scope:** решение для Phase 1 не должно быть ошибочно объявлено универсальной моделью для всех будущих vertical carrier или кранов-штабелёров.
 
 ---
 
 ## 2. Решение
 
-### 2.1. Лифт — однозначно Device
+### 2.1. Hybrid lift моделируется как Device семейства VerticalCarrier
 
-**Лифт моделируется исключительно как `Device`**, а не как `Edge`, не как гибрид `Device + TransitEdge`.
+`HybridLift` моделируется только как `Device`, а не как `Edge` и не как гибрид `Device + TransitEdge`.
 
-**Обоснование:**
-- Лифт имеет состояние: текущий ярус (`currentNode`), содержимое кабины, режим работы.
-- Лифт участвует в Heartbeat / LWT-механизме наравне с шаттлами.
-- Лифт имеет `Capabilities`, которые могут деградировать.
-- Лифт является участником State Machine Handshake при передаче груза.
+Причины:
 
-Ребро графа — пассивная связь между узлами. Лифт — активный агент. Совмещение этих семантик в одной сущности создаёт неустранимую сложность без архитектурной выгоды.
+- lift имеет собственное состояние, liveness, capabilities и fault-модель;
+- lift является участником handoff и исполняет `ExecutionTask`;
+- lift должен быть видимым доменным ресурсом для `WCS`, `Digital Twin` и recovery-логики.
 
-### 2.2. Топологическая модель лифтовой шахты
+При этом в графе существуют `CarrierNode`, которые представляют точки положения vertical carrier по уровням. Эти рёбра доступны только через `VerticalCarrier`, но не превращают сам ресурс в ребро графа.
 
-Лифтовая шахта представлена **набором узлов графа — по одному на каждый ярус:**
+### 2.2. Phase 1 transfer mode фиксируется явно
 
+Для Phase 1 принимается единственный inter-level transfer mode:
+
+`SHUTTLE_RIDES_HYBRID_LIFT_WITH_PAYLOAD`
+
+Смысл режима:
+
+- шаттл удерживает payload;
+- шаттл въезжает в `HybridLift` вместе с payload;
+- во время вертикального перемещения lift является носителем шаттла;
+- payload custody не передаётся lift.
+
+Альтернативные режимы, где payload передаётся carrier без въезда шаттла, не входят в current baseline. Тот же `HybridLift` может физически поддерживать такой режим, но для платформы он будет считаться отдельным enabled transfer mode и потребует отдельного baseline update и, при необходимости, отдельного ADR.
+
+### 2.3. Топологическая модель lift-shaft для Phase 1
+
+Лифтовая шахта представляется набором `CarrierNode` — по одному на каждый уровень:
+
+```text
+CarrierShaft_A:
+  Level_1_CarrierNode_A
+  Level_2_CarrierNode_A
+  Level_3_CarrierNode_A
+  Level_4_CarrierNode_A
 ```
-LiftShaft_A:
-  Floor_1_LiftNode_A
-  Floor_2_LiftNode_A
-  Floor_3_LiftNode_A
-  Floor_4_LiftNode_A
+
+Рядом с каждым `CarrierNode` существует обязательный `TransferPoint`:
+
+```text
+[уровневый граф] -> [TransferPoint_Level_N_A] <-> [Level_N_CarrierNode_A]
 ```
 
-Рёбра между `Floor_N_LiftNode` и `Floor_M_LiftNode` **присутствуют в графе статически**, но traversal по ним возможен исключительно через `Lift Device`. WCS блокирует эти рёбра для прямого использования шаттлами.
+`TransferPoint` является единственной доменной точкой:
 
-**Transfer Node** — специальный узел примыкания к лифту, обязателен на каждом ярусе рядом с `Floor_N_LiftNode`. Имеет однонаправленные рёбра к/от лифтового узла и является единственной точкой входа/выхода из лифта для шаттлов и паллет.
+- входа шаттла в lift;
+- выхода шаттла из lift;
+- проверки локальной готовности перед `BoardCarrier` / `ExitCarrier`.
 
-```
-[Ярус N: общая магистраль] → [TransferNode_Floor_N] ⇄ [Floor_N_LiftNode]
-```
+### 2.4. Модель состояния Shuttle3D
 
-### 2.3. Двухосевая модель состояния шаттла
+Для Phase 1 принимается двухосевая модель состояния шаттла:
 
-Атрибут `mode` разделён на **два независимых атрибута**, описывающих разные аспекты состояния шаттла:
-
-```
-Shuttle {
-  movementMode:   AUTONOMOUS | PASSENGER
+```text
+Shuttle3D {
+  movementMode:   AUTONOMOUS | CARRIER_PASSENGER
   dispatchStatus: AVAILABLE | OCCUPIED | SUSPENDED | MAINTENANCE
+  carrierId?:     DeviceId
 }
 ```
 
-#### `movementMode` — кто управляет физическим движением
+#### `movementMode`
 
-| Значение | Описание |
-|---|---|
-| `AUTONOMOUS` | WCS выдаёт этому шаттлу команды движения. Шаттл самостоятельно перемещается по узлам графа. |
-| `PASSENGER` | Шаттл не получает команд движения. Его `currentNode` наследуется от лифта в реальном времени. WCS не выдаёт шаттлу Transport Tasks. |
+- `AUTONOMOUS` — шаттл сам исполняет команды движения по ярусному графу.
+- `CARRIER_PASSENGER` — шаттл находится внутри `VerticalCarrier`, не получает собственных команд движения и наследует своё положение от carrier.
 
-#### `dispatchStatus` — доступность для диспетчеризации WES
+#### `dispatchStatus`
 
-| Значение | Описание |
-|---|---|
-| `AVAILABLE` | WES может назначить шаттлу новый Job. |
-| `OCCUPIED` | Шаттл выполняет Job (включая период нахождения в лифте). |
-| `SUSPENDED` | Job приостановлен: шаттл ожидает ресурса (лифт занят, нет слота). |
-| `MAINTENANCE` | Выведен из пула: едет на зарядку, сервис или физически недоступен. |
+- `AVAILABLE` — шаттл может принять новый `Job`.
+- `OCCUPIED` — шаттл исполняет `ExecutionTask` в составе активного `Job`.
+- `SUSPENDED` — исполнение приостановлено, ожидается ресурс, retry или операторское вмешательство.
+- `MAINTENANCE` — шаттл выведен из рабочего пула.
 
-#### Матрица допустимых комбинаций состояний
+#### Допустимые комбинации Phase 1
 
 | movementMode | dispatchStatus | Сценарий |
 |---|---|---|
-| `AUTONOMOUS` | `AVAILABLE` | Шаттл свободен, ожидает задачи |
-| `AUTONOMOUS` | `OCCUPIED` | Шаттл везёт паллету по ярусу |
-| `AUTONOMOUS` | `SUSPENDED` | Шаттл стоит у TransferNode, ждёт лифт |
-| `AUTONOMOUS` | `MAINTENANCE` | Шаттл самостоятельно едет к зарядной станции |
-| `PASSENGER` | `OCCUPIED` | Шаттл в лифте с паллетой, Job продолжается |
-| `PASSENGER` | `MAINTENANCE` | Шаттл в лифте едет на сервис / зарядку на другом ярусе |
+| `AUTONOMOUS` | `AVAILABLE` | Свободный шаттл |
+| `AUTONOMOUS` | `OCCUPIED` | Шаттл выполняет маршрут по ярусу |
+| `AUTONOMOUS` | `SUSPENDED` | Шаттл ожидает lift / station / retry |
+| `AUTONOMOUS` | `MAINTENANCE` | Шаттл направлен на сервис или зарядку |
+| `CARRIER_PASSENGER` | `OCCUPIED` | Шаттл перевозится lift в составе активного Job |
+| `CARRIER_PASSENGER` | `MAINTENANCE` | Шаттл перевозится carrier на сервисный уровень |
 
-> **Недопустимая комбинация:** `PASSENGER` + `AVAILABLE` — шаттл не может принять новый Job пока находится в лифте.
+Недопустимая комбинация: `CARRIER_PASSENGER + AVAILABLE`.
 
-### 2.4. Трассируемость шаттла в режиме PASSENGER
+### 2.5. Ownership и payload custody
 
-Когда `Shuttle.movementMode = PASSENGER`:
+Принимаются следующие правила:
 
-```
-shuttle.currentNode = lift.currentNode   // живое наследование
+- `WES` остаётся владельцем `Job` на всём протяжении inter-level transfer.
+- `WCS` остаётся владельцем `ExecutionTask` и handoff state machine.
+- шаттл не становится владельцем `Job`, но может оставаться текущим держателем payload custody.
+- `HybridLift` не становится владельцем `Job` и не принимает payload custody в Phase 1 режиме.
+
+Таким образом, vertical transfer не меняет доменный ownership, а только меняет carrier-context исполнения.
+
+### 2.6. Трассируемость шаттла внутри lift
+
+Когда `Shuttle3D.movementMode = CARRIER_PASSENGER`, используется правило:
+
+```text
+shuttle.currentNode := carrier.currentNode
 ```
 
 Это означает:
-- Digital Twin всегда знает точное местоположение каждого шаттла.
-- Шаттл «движется» по графу вместе с лифтом без собственных Transport Tasks.
-- При выгрузке (`ExitLift`) шаттл получает `currentNode = TransferNode_Floor_N` целевого яруса и переходит в `AUTONOMOUS`.
 
-### 2.5. Непрерывность Job при межъярусном перемещении
+- `Digital Twin` всегда знает актуальное положение шаттла;
+- recovery после рестарта не требует «исчезновения» шаттла из модели;
+- шаттл продолжает участвовать в контексте `Job`, но не получает автономных команд движения.
 
-Когда шаттл везёт паллету и физически едет в лифте, **Job не прерывается и не передаётся**. Меняется только `movementMode`.
+### 2.7. Handoff последовательность Phase 1
 
-Пример полного Job: «Доставить паллету из ячейки A (ярус 2) в ячейку B (ярус 1)»
+#### `BoardCarrier`
 
-```
-Step 1: TransportTask  — шаттл → ячейка A                    [AUTONOMOUS / OCCUPIED]
-Step 2: ActionTask     — захват паллеты                       [AUTONOMOUS / OCCUPIED]
-Step 3: TransportTask  — шаттл → TransferNode_Floor_2         [AUTONOMOUS / OCCUPIED]
-Step 4: ActionTask     — BoardLift (Handshake с лифтом)       [→ PASSENGER / OCCUPIED]
-Step 5: TransportTask  — лифт: Floor_2_LiftNode → Floor_1_LiftNode
-                         шаттл: currentNode наследуется       [PASSENGER / OCCUPIED]
-Step 6: ActionTask     — ExitLift (Handshake с лифтом)        [→ AUTONOMOUS / OCCUPIED]
-Step 7: TransportTask  — шаттл → ячейка B                    [AUTONOMOUS / OCCUPIED]
-Step 8: ActionTask     — сброс паллеты                        [AUTONOMOUS / OCCUPIED]
-```
+1. Шаттл прибывает в `TransferPoint` и подтверждает `ReadyToBoard`.
+2. `HybridLift` прибывает в соответствующий `CarrierNode` и подтверждает `ReadyToReceive`.
+3. `WCS` проверяет локи, состояние station/payload и готовность обоих участников.
+4. `WCS` выдаёт commit на физический въезд.
+5. После подтверждения физического въезда:
+   - `shuttle.movementMode = CARRIER_PASSENGER`
+   - `shuttle.carrierId = liftId`
+6. Lift может начать вертикальное перемещение.
 
-Job владелец — шаттл на всём протяжении. Лифт исполняет Step 5 как подчинённый агент, не приобретая ownership над Job или паллетой.
+#### `ExitCarrier`
 
-### 2.6. State Machine Handshake при посадке/высадке (BoardLift / ExitLift)
+1. `HybridLift` достигает целевого `CarrierNode`.
+2. `WCS` проверяет свободный `TransferPoint` целевого уровня.
+3. `WCS` выдаёт commit на физический выезд.
+4. После подтверждения выезда:
+   - `shuttle.movementMode = AUTONOMOUS`
+   - `shuttle.carrierId = null`
+   - `shuttle.currentNode = targetTransferPoint`
 
-Переход `movementMode` происходит только через успешный Handshake. WCS оркестрирует:
+### 2.8. Ограничение Phase 1 по вместимости lift
 
-**BoardLift:**
-1. Shuttle сигнализирует `ReadyToBoard` (стоит на TransferNode, груз зафиксирован)
-2. Lift сигнализирует `ReadyToReceive` (кабина на нужном ярусе, двери открыты)
-3. WCS получает оба подтверждения → выдаёт команду на физический въезд
-4. После подтверждения физического въезда: `shuttle.movementMode = PASSENGER`
-5. Лифт закрывает двери / фиксирует платформу → может начать движение
+Для Phase 1 принимается ограничение:
 
-**ExitLift:**
-1. Lift сигнализирует `ArrivedAtFloor` (ярус достигнут, двери открыты)
-2. WCS проверяет что `TransferNode_Floor_N` свободен
-3. WCS выдаёт команду на физический выезд
-4. После подтверждения физического выезда: `shuttle.movementMode = AUTONOMOUS`, `shuttle.currentNode = TransferNode_Floor_N`
+- один `HybridLift` имеет **один shuttle-slot**;
+- внутри lift одновременно поддерживается не более одного шаттла;
+- шаттл может находиться внутри вместе со своим удерживаемым payload.
 
-В случае сбоя одного из агентов в процессе Handshake: WCS безопасно отменяет транзакцию, оба агента переходят в `SUSPENDED`, Job переходит в состояние `SUSPENDED`, ожидает retry или ручного вмешательства.
+Многоместные carrier и multi-shuttle occupancy в Phase 1 не поддерживаются.
 
----
+### 2.9. Граница применимости решения
 
-## 3. Последствия и влияние на смежные компоненты
+Настоящее решение применимо только к Phase 1 mode `SHUTTLE_RIDES_HYBRID_LIFT_WITH_PAYLOAD`.
 
-### Domain Model
-- `Device` — базовая сущность для Shuttle и Lift.
-- `Shuttle extends Device` — добавляет `movementMode`, `dispatchStatus`, `carrierId` (ссылка на лифт в режиме PASSENGER).
-- `Lift extends Device` — добавляет `liftClass` (PALLET_ONLY / SHUTTLE_ONLY / HYBRID), `currentFloor`, `passengerShuttleId` (опционально).
+Оно **не утверждает**, что:
 
-### Topology / Graph Engine
-- Обязательны `TransferNode` на каждом ярусе у каждого лифта.
-- Рёбра между `Floor_N_LiftNode` помечаются `traversalMode: LIFT_ONLY`.
-- Алгоритмы поиска пути обязаны учитывать `traversalMode` при построении маршрута.
-
-### WES Routing Engine
-- При планировании маршрута через несколько ярусов: WES прокладывает сквозной маршрут через `LiftNode`, WCS транслирует его в Step-последовательность с BoardLift/ExitLift.
-- Шаттл в режиме `PASSENGER` исключается из пула диспетчеризации (не получает новых Job).
-- `dispatchStatus = MAINTENANCE` исключает шаттл из пула независимо от `movementMode`.
-
-### WCS Fleet Manager
-- WCS лифта оркестрирует Handshake и несёт ответственность за обновление `shuttle.movementMode`.
-- WCS публикует событие `ShuttleBoarded` / `ShuttleExited` в транзакционную шину.
-
-### Digital Twin
-- Подписывается на события `ShuttleBoarded`, `ShuttleExited`, `LiftMoved`.
-- При получении `LiftMoved`: обновляет `currentNode` для лифта **и** для всех шаттлов у которых `carrierId = liftId`.
-
-### Event Catalog (новые события)
-```
-ShuttleMovementModeChanged  { shuttleId, from, to, carrierId?, timestamp }
-ShuttleBoarded              { shuttleId, liftId, floor, jobId }
-ShuttleExited               { shuttleId, liftId, floor, jobId }
-LiftCapabilityDeclared      { liftId, liftClass, supportedFloors }
-```
+- любой future `VerticalCarrier` обязан работать по тем же правилам custody;
+- любой кран-штабелёр может быть описан как `HybridLift` с иным названием;
+- payload всегда должен оставаться на шаттле во всех будущих конфигурациях.
 
 ---
 
-## 4. Альтернативы
+## 3. Последствия для смежных компонентов
 
-### Альтернатива A: Лифт как TransitEdge + Device (гибрид)
-Двойное представление одного физического объекта создаёт неустранимую сложность: непонятно где живёт `currentNode`, как работает Heartbeat для Edge, кто является участником Handshake. Выгода (упрощение pathfinding) не компенсирует сложность реализации.
+### 3.1. Domain Model
 
-### Альтернатива B: Один атрибут `mode: AUTONOMOUS | PASSENGER | MAINTENANCE`
-Не покрывает кейс "шаттл в лифте на техобслуживание" (PASSENGER + MAINTENANCE) и "шаттл стоит ждёт лифт" (AUTONOMOUS + SUSPENDED). Одна ось смешивает движение и диспетчеризацию — разные концепции.
+- `Shuttle3D` получает `movementMode`, `dispatchStatus`, `carrierId`.
+- `HybridLift` моделируется как `VerticalCarrier` с `slotCount = 1` и `occupiedShuttleId`.
+- `TransferPoint` становится обязательной доменной сущностью на каждом уровне lift.
 
-### Альтернатива C: Шаттл "исчезает" из графа на время нахождения в лифте
-Потеря трассируемости в Digital Twin. Невозможность оперативно отреагировать если Job должен быть отменён пока шаттл в лифте. Усложняет восстановление после сбоя (где шаттл после краша WES?).
+### 3.2. WES Routing
 
-### Альтернатива D: Job передаётся лифту при BoardLift
-Нарушает единство ответственности: WMS выдал Job одному ресурсу — именно он должен отрапортовать о завершении. Передача ownership создаёт сложную saga-компенсацию при сбое лифта в середине перевозки.
+- `WES` строит сквозной payload-route через `TransferPoint` и `CarrierNode`.
+- `WES` не передаёт ownership `Job` между устройствами.
+- inter-level transfer остаётся частью единого `Job`.
+
+### 3.3. WCS Execution
+
+- `WCS` оркестрирует `BoardCarrier`, `MoveCarrier`, `ExitCarrier`.
+- `WCS` несёт ответственность за перевод `movementMode` и за локальные проверки готовности.
+- `WCS` не должен полагаться на wall-clock устройств как на условие handoff.
+
+### 3.4. Digital Twin
+
+- `Digital Twin` обязан материализовать положение lift и shuttle одновременно.
+- событие вертикального перемещения обновляет currentNode carrier и всех shuttle с `carrierId = carrier.deviceId`.
+
+### 3.5. Event Model
+
+Phase 1 требует как минимум следующих operational events:
+
+```text
+ShuttleMovementModeChanged
+VerticalCarrierPositionChanged
+TransferCommitted
+TransferAborted
+PayloadCustodyChanged
+```
+
+---
+
+## 4. Рассмотренные альтернативы
+
+### Альтернатива A: Lift как Edge + Device
+
+Отклонена. Двойная семантика усложняет ownership, recovery и handoff FSM без практической выгоды.
+
+### Альтернатива B: Один атрибут `mode`
+
+Отклонена. Одна ось не покрывает различие между управлением движением и доступностью ресурса для диспетчеризации.
+
+### Альтернатива C: `Job` принадлежит шаттлу
+
+Отклонена. Это плохо масштабируется на более сложные transfer patterns и делает `Job` слишком зависимым от конкретного семейства устройства.
+
+### Альтернатива D: Сразу объявить Phase 1 модель универсальной для всех carrier и кранов
+
+Отклонена. Это привело бы либо к ложной универсальности, либо к преждевременной перегрузке модели абстракциями.
