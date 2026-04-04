@@ -1,11 +1,12 @@
-asyncapi: 3.0.0
+asyncapi: 3.1.0
 info:
   title: SmartWarehouse Southbound Contract v0
-  version: 0.1.0
+  version: 0.1.1
   description: |
     Машиночитаемая спецификация нижнего контракта интеграции для текущего базового состава.
     Точка зрения спецификации: платформа `WCS`.
     Платформа публикует команды и принимает события устройств.
+    Структура документа фиксируется в терминах `AsyncAPI 3.1.0`: `channels`, `operations` и `components.messages`.
 defaultContentType: application/json
 channels:
   requestStateSnapshotCommand:

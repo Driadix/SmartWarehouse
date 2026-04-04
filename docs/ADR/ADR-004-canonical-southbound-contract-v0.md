@@ -2,7 +2,7 @@
 
 **Статус:** Принято  
 **Дата:** 2026-04-03  
-**Связанные артефакты:** Glossary, ArchitecturalVision.md, DomainModel-v0, Execution-Semantics-v0.md, Station-Site-Integration-v0.md, Capability-Catalog-Phase-1.md, ADR-001, ADR-002, ADR-003, ADR-007
+**Связанные артефакты:** Glossary, ArchitecturalVision.md, DomainModel-v0, Execution-Semantics-v0.md, Station-Site-Integration-v0.md, Capability-Catalog-Phase-1.md, docs/api/southbound/asyncapi-v0.yaml, docs/Standards/AsyncAPI Specification v3.1.0.pdf, ADR-001, ADR-002, ADR-003, ADR-007
 
 ---
 
@@ -201,7 +201,7 @@ familySpecificState
 
 Программная имитационная модель текущего базового состава обязана реализовывать тот же канонический контракт v0, что и реальные адаптеры. Имитационная модель не имеет права использовать внутренние сокращённые интерфейсы, которых не будет у оборудования.
 
-Машиночитаемая спецификация контракта v0 поддерживается в [asyncapi-v0.yaml](/c:/Projects/SmartWarehouse/docs/api/southbound/asyncapi-v0.yaml) и JSON Schema-файлах каталога [docs/api/schemas/southbound](/c:/Projects/SmartWarehouse/docs/api/schemas/southbound).
+Машиночитаемая спецификация контракта v0 поддерживается в [asyncapi-v0.yaml](/c:/Projects/SmartWarehouse/docs/api/southbound/asyncapi-v0.yaml) в формате `AsyncAPI 3.1.0` и JSON Schema-файлах каталога [docs/api/schemas/southbound](/c:/Projects/SmartWarehouse/docs/api/schemas/southbound).
 
 ---
 
