@@ -3,7 +3,7 @@
 
 **Статус:** Базовый документ текущей реализации  
 **Последнее обновление:** 2026-04-03  
-**Связанные артефакты:** Glossary, ArchitecturalVision.md, DomainModel-v0, Topology-Configuration-Model-v0.md, Execution-Semantics-v0.md, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006
+**Связанные артефакты:** Glossary, ArchitecturalVision.md, DomainModel-v0, Topology-Configuration-Model-v0.md, Execution-Semantics-v0.md, Station-Site-Integration-v0.md, Capability-Catalog-Phase-1.md, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007
 
 ---
 
@@ -54,6 +54,7 @@
 
 - `LoadStation` и `UnloadStation` являются пассивными `StationBoundary`;
 - отдельный контроллер станции и отдельный нижний сеанс управления для станции не развёртываются.
+- готовность пассивной станции и факты передачи на её границе поступают в `WCS` через `Station/Site Integration Adapter`.
 
 ---
 
@@ -118,7 +119,7 @@
 Семантика пассивных точек текущего базового состава:
 
 - `NodeReached(StationNode)` подтверждает только прибытие шаттла на границу станции;
-- завершение загрузки или выгрузки требует подтверждённого изменения физического удержания груза;
+- завершение загрузки или выгрузки требует подтверждённого изменения физического удержания груза, полученного через `Station/Site Integration Adapter`;
 - `NodeReached(ChargeNode)` достаточно для подтверждения прибытия к точке зарядки и начала шага зарядки;
 - `NodeReached(ServiceNode)` достаточно для подтверждения прибытия к сервисной точке.
 
@@ -148,7 +149,8 @@
 - `WCS` материализует макрошаг во внутренние runtime-фазы и канонические команды нижнего уровня;
 - `WCS` не меняет самовольно выбранные `WES` ресурсы и глобальную цель маршрута; при невозможности продолжить исполнение он приостанавливает шаг и эскалирует перепланирование в `WES`.
 - потеря `DeviceSession` во время активного шага переводит `ExecutionTask` в `Suspended` до повторного согласования по `StateSnapshot`.
-- для пассивной станции `WCS` не ждёт station-side подтверждений нижнего уровня; факт позиционирования подтверждается `NodeReached`, а факт передачи груза — изменением физического удержания.
+- для пассивной станции `WCS` не ждёт station-side подтверждений нижнего уровня; факт позиционирования подтверждается `NodeReached`, а факт передачи груза и готовность станции поступают через `Station/Site Integration Adapter`.
+- `GrantMotionWindow` выдаётся до следующей конфликтной точки, а не на весь оставшийся маршрут.
 
 ---
 
@@ -186,6 +188,7 @@ slotCount   = 1
 - `WCS Execution Core`
 - контроллеры семейств ресурсов
 - адаптерный слой изоляции (`ACL Adapters`)
+- адаптер интеграции станций и площадки для пассивных `LoadStation` и `UnloadStation`
 - `Digital Twin`
 - контур имитационного моделирования
 
@@ -219,6 +222,9 @@ slotCount   = 1
 - [ADR-004-canonical-southbound-contract-v0.md](/c:/Projects/SmartWarehouse/docs/ADR/ADR-004-canonical-southbound-contract-v0.md)
 - [ADR-005-wes-planning-and-wcs-materialization.md](/c:/Projects/SmartWarehouse/docs/ADR/ADR-005-wes-planning-and-wcs-materialization.md)
 - [ADR-006-session-loss-recovery-and-reconciliation.md](/c:/Projects/SmartWarehouse/docs/ADR/ADR-006-session-loss-recovery-and-reconciliation.md)
+- [ADR-007-short-motion-window-to-next-conflict-point.md](/c:/Projects/SmartWarehouse/docs/ADR/ADR-007-short-motion-window-to-next-conflict-point.md)
 - [DomainModel-v0.md](/c:/Projects/SmartWarehouse/docs/DomainModel-v0.md)
 - [Topology-Configuration-Model-v0.md](/c:/Projects/SmartWarehouse/docs/Topology-Configuration-Model-v0.md)
 - [Execution-Semantics-v0.md](/c:/Projects/SmartWarehouse/docs/Execution-Semantics-v0.md)
+- [Station-Site-Integration-v0.md](/c:/Projects/SmartWarehouse/docs/Station-Site-Integration-v0.md)
+- [Capability-Catalog-Phase-1.md](/c:/Projects/SmartWarehouse/docs/Capability-Catalog-Phase-1.md)

@@ -2,7 +2,7 @@
 
 **Статус:** Принято  
 **Дата:** 2026-04-03  
-**Связанные артефакты:** Glossary, ArchitecturalVision.md, DomainModel-v0, Execution-Semantics-v0.md, ADR-001, ADR-002, ADR-003
+**Связанные артефакты:** Glossary, ArchitecturalVision.md, DomainModel-v0, Execution-Semantics-v0.md, Station-Site-Integration-v0.md, Capability-Catalog-Phase-1.md, ADR-001, ADR-002, ADR-003, ADR-007
 
 ---
 
@@ -104,7 +104,7 @@ ExecuteAction    { actionType }
 
 Где:
 
-- `GrantMotionWindow` выдаёт разрешённый ближайший путь для локального исполнения;
+- `GrantMotionWindow` выдаёт короткий исполнимый путь до ближайшей конфликтной точки или `targetNode`;
 - `PrepareTransfer` подготавливает шаттл к операции передачи на станции или у лифта;
 - `ExecuteAction` используется для действий на станции, если они выполняются шаттлом.
 
@@ -131,7 +131,7 @@ AbortTransfer
 ExecuteAction
 ```
 
-Пассивная станция допускает отсутствие собственного нижнего сеанса управления; тогда её готовность моделируется через `WCS` и интеграционный слой станции.
+Пассивная станция допускает отсутствие собственного нижнего сеанса управления; тогда её готовность и факты передачи моделируются через `WCS` и [docs/Station-Site-Integration-v0.md](/c:/Projects/SmartWarehouse/docs/Station-Site-Integration-v0.md).
 
 Для текущего базового состава действуют дополнительные правила:
 

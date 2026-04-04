@@ -3,7 +3,7 @@
 
 **Статус:** Черновик v0  
 **Последнее обновление:** 2026-04-03  
-**Связанные артефакты:** Glossary, ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, Topology-Configuration-Model-v0.md, Execution-Semantics-v0.md, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006
+**Связанные артефакты:** Glossary, ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, Topology-Configuration-Model-v0.md, Execution-Semantics-v0.md, Station-Site-Integration-v0.md, Capability-Catalog-Phase-1.md, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007
 
 ---
 
@@ -185,6 +185,7 @@ StationBoundary {
 - станция является доменной сущностью на границе платформы;
 - в текущем базовом составе поддерживается только `controlMode = PASSIVE`;
 - пассивная граница станции не имеет собственного `DeviceSession` и не требует отдельного контроллера семейства ресурсов;
+- готовность пассивной станции и факты передачи на её границе поступают через `Station/Site Integration Adapter`;
 - `NodeReached(attachedNode)` подтверждает позиционирование ресурса на границе станции;
 - операция передачи со станцией всегда проходит через явный `ExecutionTask` и подтверждённую фиксацию передачи;
 - для загрузки и выгрузки одного `NodeReached` недостаточно: завершение требует подтверждённого изменения `Payload.custodyHolder`.
@@ -302,6 +303,8 @@ CapabilitySet {
 ```
 
 Статические и активные возможности разделяются. Именно `activeCapabilities` используются при выборе ресурса и исполнении.
+
+Канонический состав возможностей текущего базового состава определяется в [docs/Capability-Catalog-Phase-1.md](/c:/Projects/SmartWarehouse/docs/Capability-Catalog-Phase-1.md).
 
 ---
 

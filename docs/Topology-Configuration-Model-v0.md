@@ -3,7 +3,7 @@
 
 **Статус:** Живой документ  
 **Последнее обновление:** 2026-04-04  
-**Связанные артефакты:** ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, DomainModel-v0.md, Execution-Semantics-v0.md, ADR-002, ADR-004, ADR-005
+**Связанные артефакты:** ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, DomainModel-v0.md, Execution-Semantics-v0.md, Station-Site-Integration-v0.md, ADR-002, ADR-004, ADR-005
 
 ---
 
@@ -22,6 +22,7 @@
 ## 2. Принципы модели
 
 - Конфигурация является **декларативной** и задаётся при развёртывании.
+- Канонический источник конфигурации для `Phase 1` хранится в версионируемых YAML-файлах в репозитории; JSON допускается как эквивалентное представление или производный артефакт.
 - Управляющая логика работает только с логическими `NodeId`.
 - Сырые координаты, QR, RFID, LiDAR и иные способы локализации остаются за пределами этой модели.
 - Конфигурация описывает **что существует** в топологии, но не содержит runtime-состояния `Reservation`, `DeviceSession`, `Fault`.

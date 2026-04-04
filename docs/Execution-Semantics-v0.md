@@ -3,7 +3,7 @@
 
 **Статус:** Живой документ  
 **Последнее обновление:** 2026-04-04  
-**Связанные артефакты:** ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, DomainModel-v0.md, Topology-Configuration-Model-v0.md, ADR-004, ADR-005, ADR-006
+**Связанные артефакты:** ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, DomainModel-v0.md, Topology-Configuration-Model-v0.md, Station-Site-Integration-v0.md, Capability-Catalog-Phase-1.md, ADR-004, ADR-005, ADR-006, ADR-007
 
 ---
 
@@ -39,6 +39,7 @@
 - `LoadStation` и `UnloadStation` являются `StationBoundary`.
 - `ChargeNode` и `ServiceNode` не являются `StationBoundary`.
 - Пассивная станция не имеет собственного `DeviceSession`, команд и событий нижнего уровня.
+- Готовность пассивной станции и подтверждённые факты передачи на её границе поступают в `WCS` через `Station/Site Integration Adapter`.
 - Пассивная сервисная точка в текущем базовом составе также не имеет собственного сеанса управления.
 - `NodeReached(StationNode)` подтверждает только позиционирование на границе станции.
 - `NodeReached(ChargeNode)` и `NodeReached(ServiceNode)` подтверждают прибытие к сервисной точке.
@@ -52,7 +53,7 @@
 2. `WCS` владеет выбором и сменой `RuntimePhase`.
 3. Шаг не считается завершённым по таймеру или по предположению.
 4. Изменение физического удержания груза происходит только по подтверждённому факту.
-5. Для пассивной станции `WCS` не ждёт station-side southbound-команд.
+5. Для пассивной станции `WCS` не ждёт station-side southbound-команд и использует `Station/Site Integration Adapter` как источник готовности и фактов передачи.
 6. Для пассивной сервисной точки `WCS` не ждёт отдельного подтверждения от станции.
 7. Если `StateSnapshot` не доказывает постусловия шага, шаг остаётся `Suspended` или продолжается после повторного согласования.
 
@@ -73,6 +74,7 @@ Accepted -> MotionAuthorized -> InMotion -> Arrived -> Completed | Suspended
 Материализация:
 
 - `WCS` выдаёт `GrantMotionWindow { nodePath[] }`;
+- окно движения должно заканчиваться на ближайшей конфликтной точке, либо на `targetNode`, если конфликтной точки раньше нет;
 - устройство подтверждает продвижение событиями `NodeReached`;
 - `WCS` может отзывать окно через `RevokeMotionWindow`;
 - завершение шага подтверждается `NodeReached(targetNode)`.
@@ -97,8 +99,8 @@ Accepted -> ReachingBoundary -> BoundaryPositionConfirmed -> CommitCustody -> Co
 
 - `WCS` ведёт шаттл к `StationNode`, привязанному к `StationBoundary`;
 - `NodeReached(attachedNode)` подтверждает прибытие шаттла на границу станции;
-- после прибытия `WCS` выполняет внутреннюю проверку `StationBoundary.readiness`;
-- изменение физического удержания груза фиксируется только внутри платформы;
+- после прибытия `WCS` выполняет проверку `StationBoundary.readiness`, полученной через `Station/Site Integration Adapter`;
+- изменение физического удержания груза фиксируется только после подтверждённого факта передачи, полученного через `Station/Site Integration Adapter`;
 - завершение шага возможно только после достижения постусловий по `PayloadCustodyChanged`.
 
 Подварианты:
@@ -177,9 +179,10 @@ Accepted
 
 | Подтверждённый снимок состояния | Допустимый исход |
 |---|---|
-| шаттл на `StationNode`, `PayloadCustody` ещё у исходной стороны | Безопасно продолжить шаг |
-| шаттл на `StationNode`, `PayloadCustody` уже у принимающей стороны | Безопасно завершить шаг |
+| шаттл на `StationNode`, `PayloadCustody` ещё у исходной стороны, transfer-fact от `Station/Site Integration Adapter` отсутствует | Безопасно продолжить шаг |
+| шаттл на `StationNode`, `PayloadCustody` уже у принимающей стороны, transfer-fact от `Station/Site Integration Adapter` подтверждён | Безопасно завершить шаг |
 | `PayloadCustody` изменилась, но шаттл не подтверждён на `StationNode` | Эскалировать как противоречивое состояние |
+| adapter-fact противоречит `PayloadCustody` или текущему направлению шага | Эскалировать как противоречивое состояние |
 
 ### 5.3. `CarrierTransfer`
 
