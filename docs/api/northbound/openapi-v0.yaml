@@ -394,6 +394,7 @@ components:
         code:
           type: string
           minLength: 1
+          description: Машиночитаемый код отрицательного ответа. Минимальный набор кодов `v0` зафиксирован в `Northbound-API-v0` и `Contract-Acceptance-Matrix-v0`.
         title:
           type: string
           minLength: 1

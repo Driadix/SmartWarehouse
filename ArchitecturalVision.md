@@ -4,7 +4,7 @@
 **Версия:** 1.6  
 **Статус:** Живой документ  
 **Последнее обновление:** 2026-04-04  
-**Связанные артефакты:** Glossary, Architecture-Baseline-Phase-1, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, DomainModel-v0, Topology-Configuration-Model-v0, Execution-Semantics-v0, Station-Site-Integration-v0, Capability-Catalog-Phase-1, Event-Catalog-v0, Northbound-API-v0, docs/api/northbound/openapi-v0.yaml, docs/api/southbound/asyncapi-v0.yaml
+**Связанные артефакты:** Glossary, Architecture-Baseline-Phase-1, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, DomainModel-v0, Topology-Configuration-Model-v0, Execution-Semantics-v0, Station-Site-Integration-v0, Capability-Catalog-Phase-1, Event-Catalog-v0, Northbound-API-v0, Contract-Acceptance-Matrix-v0, docs/api/northbound/openapi-v0.yaml, docs/api/southbound/asyncapi-v0.yaml
 
 ---
 
@@ -42,6 +42,7 @@
 - **`Capability-Catalog-Phase-1`:** минимальный каталог статических и активных возможностей базового состава.
 - **`Event-Catalog-v0`:** нормативный каталог канонических платформенных событий текущего базового состава.
 - **`Northbound-API-v0`:** минимальный внешний контракт `REST + static webhooks` для `PayloadTransferJob`.
+- **`Contract-Acceptance-Matrix-v0`:** минимальная матрица приёмки верхнего контракта, webhook-проекций и сценариев симуляции `v0`.
 - **`docs/api/northbound/openapi-v0.yaml`:** машиночитаемая спецификация верхнего интеграционного интерфейса `v0` в формате `OpenAPI`.
 - **`docs/api/southbound/asyncapi-v0.yaml`:** машиночитаемая спецификация нижнего контракта `v0` в формате `AsyncAPI 3.1.0`.
 

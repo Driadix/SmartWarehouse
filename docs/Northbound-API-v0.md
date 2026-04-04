@@ -3,7 +3,7 @@
 
 **Статус:** Живой документ  
 **Последнее обновление:** 2026-04-04  
-**Связанные артефакты:** ArchitecturalVision.md, Event-Catalog-v0.md, Topology-Configuration-Model-v0.md, docs/api/northbound/openapi-v0.yaml, docs/Standards/OpenAPI Specification v3.2.0.pdf
+**Связанные артефакты:** ArchitecturalVision.md, Event-Catalog-v0.md, Contract-Acceptance-Matrix-v0.md, Topology-Configuration-Model-v0.md, docs/api/northbound/openapi-v0.yaml, docs/Standards/OpenAPI Specification v3.2.0.pdf
 
 ---
 
@@ -129,6 +129,20 @@ PayloadTransferJob {
 - `sourceEndpointId` и `targetEndpointId` обязаны ссылаться на `endpointMappings[]` из `Topology Configuration`;
 - внешняя система не оперирует `StationId`, `NodeId` и `TransferPointId`;
 - `sourceEndpointId` и `targetEndpointId` не должны совпадать.
+
+### 6.4. Минимальные коды отрицательных sync-ответов
+
+Текущий `v0` фиксирует следующий минимальный набор `Problem.code`:
+
+- `IDEMPOTENCY_CONFLICT`
+- `UNKNOWN_SOURCE_ENDPOINT`
+- `UNKNOWN_TARGET_ENDPOINT`
+- `IDENTICAL_ENDPOINTS`
+- `NO_ADMISSIBLE_ROUTE`
+- `JOB_NOT_FOUND`
+- `CANCEL_NOT_ALLOWED`
+
+Матрица приёмки контракта ведётся отдельно в [docs/Contract-Acceptance-Matrix-v0.md](/c:/Projects/SmartWarehouse/docs/Contract-Acceptance-Matrix-v0.md).
 
 ---
 
