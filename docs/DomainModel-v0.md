@@ -3,7 +3,7 @@
 
 **Статус:** Черновик v0  
 **Последнее обновление:** 2026-04-03  
-**Связанные артефакты:** Glossary, ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006
+**Связанные артефакты:** Glossary, ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, Topology-Configuration-Model-v0.md, Execution-Semantics-v0.md, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006
 
 ---
 
@@ -185,7 +185,9 @@ StationBoundary {
 - станция является доменной сущностью на границе платформы;
 - в текущем базовом составе поддерживается только `controlMode = PASSIVE`;
 - пассивная граница станции не имеет собственного `DeviceSession` и не требует отдельного контроллера семейства ресурсов;
-- операция передачи со станцией всегда проходит через явный `ExecutionTask` и подтверждённую фиксацию передачи.
+- `NodeReached(attachedNode)` подтверждает позиционирование ресурса на границе станции;
+- операция передачи со станцией всегда проходит через явный `ExecutionTask` и подтверждённую фиксацию передачи;
+- для загрузки и выгрузки одного `NodeReached` недостаточно: завершение требует подтверждённого изменения `Payload.custodyHolder`.
 
 ---
 
@@ -210,6 +212,12 @@ Node {
 - `StationNode`
 - `ChargeNode`
 - `ServiceNode`
+
+Смысл специальных узлов текущего базового состава:
+
+- `StationNode` — узел примыкания `StationBoundary`;
+- `ChargeNode` — пассивная сервисная точка зарядки, не являющаяся `StationBoundary`;
+- `ServiceNode` — пассивная сервисная точка обслуживания, не являющаяся `StationBoundary`.
 
 ### 4.2. `Edge`
 
@@ -246,6 +254,8 @@ Reservation {
 
 - `PLAN` используется как плановый контекст маршрута;
 - `EXECUTION` используется для краткосрочных резервирований и скользящего окна резервирования.
+
+Структура конфигурации топологии и связей между `Node`, `Edge`, станциями, шахтами и сервисными точками задаётся в [docs/Topology-Configuration-Model-v0.md](/c:/Projects/SmartWarehouse/docs/Topology-Configuration-Model-v0.md).
 
 ---
 

@@ -42,6 +42,7 @@
 Для текущего базового состава это означает:
 
 - `Navigate` материализуется в выдачу, отзыв и контроль `GrantMotionWindow`;
+- `Navigate` к `ChargeNode` или `ServiceNode` завершается по подтверждённому `NodeReached(targetNode)`, если точка остаётся пассивной;
 - `StationTransfer` материализуется в прибытие к `StationNode`, локальные проверки и подтверждённое изменение физического удержания груза;
 - `CarrierTransfer` материализуется во внутренний конечный автомат, который может включать `PrepareTransfer`, `BoardCarrier`, `MoveCarrier`, `ExitCarrier`, `CommitTransfer`, `AbortTransfer`.
 

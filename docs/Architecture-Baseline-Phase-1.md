@@ -3,7 +3,7 @@
 
 **Статус:** Базовый документ текущей реализации  
 **Последнее обновление:** 2026-04-03  
-**Связанные артефакты:** Glossary, ArchitecturalVision.md, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, DomainModel-v0
+**Связанные артефакты:** Glossary, ArchitecturalVision.md, DomainModel-v0, Topology-Configuration-Model-v0.md, Execution-Semantics-v0.md, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006
 
 ---
 
@@ -115,6 +115,13 @@
 - пассивные `ChargeNode` и `ServiceNode`, не являющиеся отдельными управляемыми станциями;
 - односекционный `HybridLift` с одним местом для шаттла.
 
+Семантика пассивных точек текущего базового состава:
+
+- `NodeReached(StationNode)` подтверждает только прибытие шаттла на границу станции;
+- завершение загрузки или выгрузки требует подтверждённого изменения физического удержания груза;
+- `NodeReached(ChargeNode)` достаточно для подтверждения прибытия к точке зарядки и начала шага зарядки;
+- `NodeReached(ServiceNode)` достаточно для подтверждения прибытия к сервисной точке.
+
 Ограничения базового состава:
 
 - внутри одного `HybridLift` одновременно поддерживается не более одного шаттла;
@@ -141,6 +148,7 @@
 - `WCS` материализует макрошаг во внутренние runtime-фазы и канонические команды нижнего уровня;
 - `WCS` не меняет самовольно выбранные `WES` ресурсы и глобальную цель маршрута; при невозможности продолжить исполнение он приостанавливает шаг и эскалирует перепланирование в `WES`.
 - потеря `DeviceSession` во время активного шага переводит `ExecutionTask` в `Suspended` до повторного согласования по `StateSnapshot`.
+- для пассивной станции `WCS` не ждёт station-side подтверждений нижнего уровня; факт позиционирования подтверждается `NodeReached`, а факт передачи груза — изменением физического удержания.
 
 ---
 
@@ -212,3 +220,5 @@ slotCount   = 1
 - [ADR-005-wes-planning-and-wcs-materialization.md](/c:/Projects/SmartWarehouse/docs/ADR/ADR-005-wes-planning-and-wcs-materialization.md)
 - [ADR-006-session-loss-recovery-and-reconciliation.md](/c:/Projects/SmartWarehouse/docs/ADR/ADR-006-session-loss-recovery-and-reconciliation.md)
 - [DomainModel-v0.md](/c:/Projects/SmartWarehouse/docs/DomainModel-v0.md)
+- [Topology-Configuration-Model-v0.md](/c:/Projects/SmartWarehouse/docs/Topology-Configuration-Model-v0.md)
+- [Execution-Semantics-v0.md](/c:/Projects/SmartWarehouse/docs/Execution-Semantics-v0.md)
