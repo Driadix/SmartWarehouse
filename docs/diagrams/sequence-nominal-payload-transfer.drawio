@@ -1,0 +1,303 @@
+<mxfile host="app.diagrams.net" agent="Codex">
+  <diagram id="sequence-nominal-payload-transfer" name="Sequence Nominal Payload Transfer">
+    <mxGraphModel dx="2298" dy="1280" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2600" pageHeight="1800" math="0" shadow="0" adaptiveColors="auto">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" parent="1" style="text;html=0;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;" value="Номинальный сценарий: перенос грузовой единицы&#xa;Маршрут LoadStation - Shuttle3D - HybridLift - Shuttle3D - UnloadStation" vertex="1">
+          <mxGeometry height="60" width="2260" x="170" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#b3b3b3;fontColor=#1f1f1f;fontSize=12;" value="Диаграмма показывает приём PayloadTransferJob, публикацию внешних вебхуков и последовательное исполнение макрошагов WES/WCS в номинальном потоке без отмены и восстановления." vertex="1">
+          <mxGeometry height="44" width="2060" x="270" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fillOpacity=35;strokeColor=#d0d0d0;dashed=1;fontStyle=1;fontSize=18;align=left;spacingLeft=12;" value="1. Приём и планирование" vertex="1">
+          <mxGeometry height="180" width="2440" x="80" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="11" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;fillOpacity=30;strokeColor=#9bbce4;dashed=1;fontStyle=1;fontSize=18;align=left;spacingLeft=12;" value="2. Загрузка на пассивной станции" vertex="1">
+          <mxGeometry height="350" width="2440" x="80" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;fillOpacity=30;strokeColor=#9ac89a;dashed=1;fontStyle=1;fontSize=18;align=left;spacingLeft=12;" value="3. Межуровневый перенос через HybridLift" vertex="1">
+          <mxGeometry height="360" width="2440" x="80" y="810" as="geometry" />
+        </mxCell>
+        <mxCell id="13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;fillOpacity=35;strokeColor=#e0c568;dashed=1;fontStyle=1;fontSize=18;align=left;spacingLeft=12;" value="4. Выгрузка и завершение задания" vertex="1">
+          <mxGeometry height="500" width="2440" x="80" y="1200" as="geometry" />
+        </mxCell>
+        <mxCell id="20" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#1f1f1f;strokeWidth=2;fontStyle=1;fontSize=16;" value="WMS / ERP / MES" vertex="1">
+          <mxGeometry height="60" width="180" x="90" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="21" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#0b1f33;strokeWidth=2;fontStyle=1;fontSize=16;" value="Верхний интеграционный&#xa;интерфейс" vertex="1">
+          <mxGeometry height="60" width="190" x="405" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="22" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#4f81bd;fontColor=#0b1f33;strokeWidth=3;fontStyle=1;fontSize=18;" value="WES" vertex="1">
+          <mxGeometry height="60" width="140" x="760" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="23" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d4e1f5;strokeColor=#2f5597;fontColor=#0b1f33;strokeWidth=3;fontStyle=1;fontSize=18;" value="WCS" vertex="1">
+          <mxGeometry height="60" width="140" x="1120" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="24" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontColor=#1f1f1f;strokeWidth=2;fontStyle=1;fontSize=16;" value="Адаптер станций&#xa;и площадки" vertex="1">
+          <mxGeometry height="60" width="190" x="1435" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="25" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#1f1f1f;strokeWidth=2;fontStyle=1;fontSize=16;" value="ACL Shuttle3D" vertex="1">
+          <mxGeometry height="60" width="170" x="1780" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="26" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#5b8f5b;fontColor=#1f1f1f;strokeWidth=2;fontStyle=1;fontSize=16;" value="ACL HybridLift" vertex="1">
+          <mxGeometry height="60" width="170" x="2050" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="27" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#1f1f1f;strokeWidth=2;fontStyle=1;fontSize=16;" value="Проекции состояния&#xa;и вебхуки" vertex="1">
+          <mxGeometry height="60" width="210" x="2295" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="30" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#999999;dashed=1;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="1410" width="4" x="178" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="31" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6c8ebf;dashed=1;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="1410" width="4" x="498" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="32" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#4f81bd;dashed=1;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="1410" width="4" x="828" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="33" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#2f5597;dashed=1;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="1410" width="4" x="1188" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="34" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#d79b00;dashed=1;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="1410" width="4" x="1528" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="35" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#82b366;dashed=1;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="1410" width="4" x="1863" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="36" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#5b8f5b;dashed=1;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="1410" width="4" x="2133" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="37" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#d6b656;dashed=1;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="1410" width="4" x="2398" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="40" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontColor=#1f1f1f;fontSize=12;align=left;spacingLeft=10;" value="План макрошагов WES&#xa;1. StationTransfer: LoadStation -&gt; Shuttle3D&#xa;2. Navigate: Shuttle3D -&gt; TransferPoint исходного уровня&#xa;3. CarrierTransfer: Shuttle3D + HybridLift&#xa;4. Navigate: Shuttle3D -&gt; StationNode целевой станции&#xa;5. StationTransfer: Shuttle3D -&gt; UnloadStation" vertex="1">
+          <mxGeometry height="92" width="330" x="850" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="41" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontColor=#1f1f1f;fontSize=12;align=left;spacingLeft=10;" value="Внутренние фазы BoardCarrier, MoveCarrier и ExitCarrier материализуются только внутри WCS и не являются отдельными плановыми сущностями WES." vertex="1">
+          <mxGeometry height="58" width="620" x="1230" y="970" as="geometry" />
+        </mxCell>
+        <mxCell id="42" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontColor=#1f1f1f;fontSize=12;align=left;spacingLeft=10;" value="Снаружи публикуются только две проекции: job.accepted и job.state_changed. ExecutionTask, внутренние фазы исполнения и канонические события WCS наружу не раскрываются." vertex="1">
+          <mxGeometry height="44" width="620" x="1790" y="1630" as="geometry" />
+        </mxCell>
+        <mxCell id="100" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#666666;labelBackgroundColor=#ffffff;fontSize=11;" value="POST /api/v0/payload-transfer-jobs&#xa;sourceEndpointId, targetEndpointId, clientOrderId">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="180" y="285" as="sourcePoint" />
+            <mxPoint x="498" y="285" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="101" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#4f81bd;labelBackgroundColor=#ffffff;fontSize=11;" value="Проверить endpointId, нормализовать запрос,&#xa;создать PayloadTransferJob">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="500" y="320" as="sourcePoint" />
+            <mxPoint x="828" y="320" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="102" edge="1" parent="1" style="dashed=1;endArrow=open;html=1;strokeWidth=2;strokeColor=#666666;labelBackgroundColor=#ffffff;fontSize=11;" value="202 Accepted + jobId">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="498" y="355" as="sourcePoint" />
+            <mxPoint x="180" y="355" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="103" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#d6b656;labelBackgroundColor=#ffffff;fontSize=11;" value="JobAccepted">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="828" y="390" as="sourcePoint" />
+            <mxPoint x="2398" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="104" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#d6b656;labelBackgroundColor=#ffffff;fontSize=11;" value="Webhook job.accepted">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2398" y="410" as="sourcePoint" />
+            <mxPoint x="180" y="410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="105" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#4f81bd;labelBackgroundColor=#ffffff;fontSize=11;" value="SubmitExecutionTask&#xa;StationTransfer: LoadStation -&gt; Shuttle3D">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="828" y="500" as="sourcePoint" />
+            <mxPoint x="1188" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="106" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#2f5597;labelBackgroundColor=#ffffff;fontSize=11;" value="ExecutionTaskStateChanged&#xa;newState = InProgress">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1188" y="535" as="sourcePoint" />
+            <mxPoint x="828" y="535" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="107" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#d6b656;labelBackgroundColor=#ffffff;fontSize=11;" value="JobStateChanged(IN_PROGRESS)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="828" y="570" as="sourcePoint" />
+            <mxPoint x="2398" y="570" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="108" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#d6b656;labelBackgroundColor=#ffffff;fontSize=11;" value="Webhook job.state_changed&#xa;previousState = ACCEPTED, newState = IN_PROGRESS">
+          <mxGeometry relative="1" x="-0.3706" as="geometry">
+            <mxPoint x="1" as="offset" />
+            <mxPoint x="2398" y="605" as="sourcePoint" />
+            <mxPoint x="180" y="605" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="109" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#82b366;labelBackgroundColor=#ffffff;fontSize=11;" value="GrantMotionWindow до StationNode">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1188" y="640" as="sourcePoint" />
+            <mxPoint x="1863" y="640" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="110" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#82b366;labelBackgroundColor=#ffffff;fontSize=11;" value="NodeReached(StationNode)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1863" y="675" as="sourcePoint" />
+            <mxPoint x="1188" y="675" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="111" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#d79b00;labelBackgroundColor=#ffffff;fontSize=11;" value="Запрос StationBoundary.readiness">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1188" y="710" as="sourcePoint" />
+            <mxPoint x="1528" y="710" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="134" edge="1" parent="1" style="dashed=1;endArrow=open;html=1;strokeWidth=2;strokeColor=#d79b00;labelBackgroundColor=#ffffff;fontSize=11;" value="StationBoundary.readiness = READY">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1528" y="740" as="sourcePoint" />
+            <mxPoint x="1188" y="740" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="112" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#d79b00;labelBackgroundColor=#ffffff;fontSize=11;" value="StationTransferFactReported&#xa;CUSTODY_TRANSFER_CONFIRMED">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1528" y="775" as="sourcePoint" />
+            <mxPoint x="1188" y="775" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="113" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#2f5597;labelBackgroundColor=#ffffff;fontSize=11;" value="PayloadCustodyChanged&#xa;+ ExecutionTaskStateChanged(Completed)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1188" y="800" as="sourcePoint" />
+            <mxPoint x="828" y="800" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="114" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#4f81bd;labelBackgroundColor=#ffffff;fontSize=11;" value="SubmitExecutionTask&#xa;Navigate: Shuttle3D -&gt; TransferPoint">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="828" y="860" as="sourcePoint" />
+            <mxPoint x="1188" y="860" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="115" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#82b366;labelBackgroundColor=#ffffff;fontSize=11;" value="GrantMotionWindow { nodePath[] }">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1188" y="895" as="sourcePoint" />
+            <mxPoint x="1863" y="895" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="116" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#82b366;labelBackgroundColor=#ffffff;fontSize=11;" value="NodeReached(TransferPoint)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1863" y="930" as="sourcePoint" />
+            <mxPoint x="1188" y="930" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="117" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#2f5597;labelBackgroundColor=#ffffff;fontSize=11;" value="ExecutionTaskStateChanged&#xa;newState = Completed">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1188" y="965" as="sourcePoint" />
+            <mxPoint x="828" y="965" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="118" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#4f81bd;labelBackgroundColor=#ffffff;fontSize=11;" value="SubmitExecutionTask&#xa;CarrierTransfer: Shuttle3D + HybridLift">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="828" y="1040" as="sourcePoint" />
+            <mxPoint x="1188" y="1040" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="119" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#82b366;labelBackgroundColor=#ffffff;fontSize=11;" value="PrepareTransfer&#xa;{ transferPointId, role }">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1188" y="1075" as="sourcePoint" />
+            <mxPoint x="1863" y="1075" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="120" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#5b8f5b;labelBackgroundColor=#ffffff;fontSize=11;" value="PrepareTransfer { transferPointId, role }&#xa;+ MoveCarrier { targetCarrierNode }">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1188" y="1110" as="sourcePoint" />
+            <mxPoint x="2133" y="1110" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="121" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#82b366;labelBackgroundColor=#ffffff;fontSize=11;" value="NodeReached(targetTransferPoint)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1863" y="1145" as="sourcePoint" />
+            <mxPoint x="1188" y="1145" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="122" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#5b8f5b;labelBackgroundColor=#ffffff;fontSize=11;" value="NodeReached(targetCarrierNode)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2133" y="1180" as="sourcePoint" />
+            <mxPoint x="1188" y="1180" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="123" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#2f5597;labelBackgroundColor=#ffffff;fontSize=11;" value="TransferCommitted&#xa;+ ExecutionTaskStateChanged(Completed)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1188" y="1215" as="sourcePoint" />
+            <mxPoint x="828" y="1215" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="124" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#4f81bd;labelBackgroundColor=#ffffff;fontSize=11;" value="SubmitExecutionTask&#xa;Navigate: Shuttle3D -&gt; StationNode выгрузки">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="828" y="1270" as="sourcePoint" />
+            <mxPoint x="1188" y="1270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="125" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#82b366;labelBackgroundColor=#ffffff;fontSize=11;" value="GrantMotionWindow { nodePath[] }">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1188" y="1305" as="sourcePoint" />
+            <mxPoint x="1863" y="1305" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="126" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#82b366;labelBackgroundColor=#ffffff;fontSize=11;" value="NodeReached(target StationNode)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1863" y="1340" as="sourcePoint" />
+            <mxPoint x="1188" y="1340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="127" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#2f5597;labelBackgroundColor=#ffffff;fontSize=11;" value="ExecutionTaskStateChanged&#xa;newState = Completed">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1188" y="1375" as="sourcePoint" />
+            <mxPoint x="828" y="1375" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="128" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#4f81bd;labelBackgroundColor=#ffffff;fontSize=11;" value="SubmitExecutionTask&#xa;StationTransfer: Shuttle3D -&gt; UnloadStation">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="828" y="1410" as="sourcePoint" />
+            <mxPoint x="1188" y="1410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="129" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#d79b00;labelBackgroundColor=#ffffff;fontSize=11;" value="Запрос StationBoundary.readiness">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1188" y="1445" as="sourcePoint" />
+            <mxPoint x="1528" y="1445" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="135" edge="1" parent="1" style="dashed=1;endArrow=open;html=1;strokeWidth=2;strokeColor=#d79b00;labelBackgroundColor=#ffffff;fontSize=11;" value="StationBoundary.readiness = READY">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1528" y="1475" as="sourcePoint" />
+            <mxPoint x="1188" y="1475" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="130" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#d79b00;labelBackgroundColor=#ffffff;fontSize=11;" value="StationTransferFactReported&#xa;CUSTODY_TRANSFER_CONFIRMED">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1528" y="1510" as="sourcePoint" />
+            <mxPoint x="1188" y="1510" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="131" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#2f5597;labelBackgroundColor=#ffffff;fontSize=11;" value="PayloadCustodyChanged(targetEndpointId)&#xa;+ ExecutionTaskStateChanged(Completed)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1188" y="1540" as="sourcePoint" />
+            <mxPoint x="828" y="1540" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="132" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#d6b656;labelBackgroundColor=#ffffff;fontSize=11;" value="JobStateChanged(COMPLETED)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="828" y="1575" as="sourcePoint" />
+            <mxPoint x="2398" y="1575" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="133" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#d6b656;labelBackgroundColor=#ffffff;fontSize=11;" value="Webhook job.state_changed&#xa;previousState = IN_PROGRESS, newState = COMPLETED">
+          <mxGeometry relative="1" x="-0.055" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="2398" y="1605" as="sourcePoint" />
+            <mxPoint x="180" y="1605" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
