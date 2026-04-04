@@ -1,10 +1,10 @@
 # Архитектурное видение и границы системы
 ### Умный склад — платформа WES/WCS
 
-**Версия:** 1.5  
+**Версия:** 1.6  
 **Статус:** Живой документ  
-**Последнее обновление:** 2026-04-03  
-**Связанные артефакты:** Glossary, Architecture-Baseline-Phase-1, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, DomainModel-v0, Topology-Configuration-Model-v0, Execution-Semantics-v0, Station-Site-Integration-v0, Capability-Catalog-Phase-1, Event-Catalog-v0, API Spec (в разработке)
+**Последнее обновление:** 2026-04-04  
+**Связанные артефакты:** Glossary, Architecture-Baseline-Phase-1, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, DomainModel-v0, Topology-Configuration-Model-v0, Execution-Semantics-v0, Station-Site-Integration-v0, Capability-Catalog-Phase-1, Event-Catalog-v0, Northbound-API-v0, docs/api/northbound/openapi-v0.yaml, docs/api/southbound/asyncapi-v0.yaml
 
 ---
 
@@ -42,7 +42,9 @@
 - **`Capability-Catalog-Phase-1`:** минимальный каталог статических и активных возможностей базового состава.
 - **`docs/api/southbound/asyncapi-v0.yaml`:** машиночитаемая спецификация нижнего контракта v0 в формате `AsyncAPI`.
 - **`Event-Catalog-v0`:** нормативный каталог канонических платформенных событий текущего базового состава.
-- **Спецификация API (`API Spec`):** спецификации верхнего и нижнего интеграционных интерфейсов (в разработке).
+- **`Northbound-API-v0`:** минимальный внешний контракт `REST + static webhooks` для `PayloadTransferJob`.
+- **`docs/api/northbound/openapi-v0.yaml`:** машиночитаемая спецификация верхнего интеграционного интерфейса `v0` в формате `OpenAPI`.
+- **`docs/api/southbound/asyncapi-v0.yaml`:** машиночитаемая спецификация нижнего контракта `v0` в формате `AsyncAPI`.
 
 ---
 
@@ -333,9 +335,12 @@ ShuttleMovementModeChanged
 
 Паттерн взаимодействия: **синхронный приём -> асинхронный результат**.
 
-- входящий поток — REST / gRPC запросы с обязательным `clientOrderId`;
-- исходящий поток — webhooks и/или поток событий;
-- периодический опрос статусов не является базовым интеграционным механизмом.
+Для текущего `Northbound API v0` фиксируются следующие правила:
+
+- входящий поток — `REST`-запросы с обязательным `clientOrderId`;
+- исходящий поток — статически настроенные `webhook`;
+- периодический опрос статусов не является базовым интеграционным механизмом;
+- внешний контракт ограничен постановкой и отслеживанием `PayloadTransferJob` и не публикует `ExecutionTask`, `RuntimePhase` и внутренние эксплуатационные события `WCS`.
 
 ### 7.2. Нижний интеграционный интерфейс (WCS ↔ Устройства / ACL)
 

@@ -1,0 +1,457 @@
+openapi: 3.2.0
+info:
+  title: SmartWarehouse Northbound API v0
+  version: 0.1.0
+  description: |
+    Машиночитаемая спецификация внешнего интеграционного контракта текущего базового состава.
+    Контракт ограничен постановкой и отслеживанием `PayloadTransferJob`.
+    Входящий поток реализуется через `REST`, исходящий поток - через статически настроенные `webhook`.
+    Выбор конкретного профиля аутентификации, URL webhook-приёмников и сетевого доступа остаётся профилем развёртывания и не нормируется `v0`.
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+tags:
+  - name: Payload Transfer Jobs
+    description: Входящий контракт постановки и чтения задания на перенос грузовой единицы.
+  - name: Webhooks
+    description: Исходящие вызовы платформы к статически настроенному приёмнику внешней системы.
+paths:
+  /api/v0/payload-transfer-jobs:
+    post:
+      tags:
+        - Payload Transfer Jobs
+      operationId: createPayloadTransferJob
+      summary: Создать `PayloadTransferJob`.
+      description: |
+        Принимает запрос на перенос грузовой единицы между двумя `endpointId`.
+        Повторный запрос с тем же `clientOrderId` и тем же нормализованным телом возвращает уже существующее задание.
+        Повторный запрос с тем же `clientOrderId`, но другим нормализованным телом возвращает `409 Conflict`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePayloadTransferJobRequest'
+            examples:
+              createJob:
+                value:
+                  clientOrderId: WMS-12345
+                  sourceEndpointId: inbound.main
+                  targetEndpointId: outbound.main
+                  priority: NORMAL
+                  payloadRef:
+                    clientPayloadId: SSCC-001
+                  attributes:
+                    batchId: BATCH-01
+      responses:
+        '202':
+          description: Запрос принят, задание создано и принято к асинхронному исполнению.
+          headers:
+            Location:
+              description: Относительный путь к созданному ресурсу.
+              schema:
+                type: string
+                format: uri-reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayloadTransferJob'
+        '200':
+          description: Идемпотентный повтор уже принятого эквивалентного запроса.
+          headers:
+            Location:
+              description: Относительный путь к уже существующему ресурсу.
+              schema:
+                type: string
+                format: uri-reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayloadTransferJob'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v0/payload-transfer-jobs/{jobId}:
+    get:
+      tags:
+        - Payload Transfer Jobs
+      operationId: getPayloadTransferJobById
+      summary: Получить задание по `jobId`.
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Текущая внешняя проекция задания.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayloadTransferJob'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v0/payload-transfer-jobs/by-client-order/{clientOrderId}:
+    get:
+      tags:
+        - Payload Transfer Jobs
+      operationId: getPayloadTransferJobByClientOrderId
+      summary: Найти задание по `clientOrderId`.
+      parameters:
+        - $ref: '#/components/parameters/ClientOrderId'
+      responses:
+        '200':
+          description: Текущая внешняя проекция задания.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayloadTransferJob'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v0/payload-transfer-jobs/{jobId}/cancel:
+    post:
+      tags:
+        - Payload Transfer Jobs
+      operationId: cancelPayloadTransferJob
+      summary: Запросить отмену задания.
+      description: |
+        Отмена выполняется асинхронно.
+        Если задание уже находится в `CANCELLED`, возвращается `200 OK`.
+        Если задание находится в другом терминальном состоянии, возвращается `409 Conflict`.
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '202':
+          description: Запрос отмены принят.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayloadTransferJob'
+        '200':
+          description: Задание уже находится в состоянии `CANCELLED`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayloadTransferJob'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+webhooks:
+  jobAccepted:
+    post:
+      tags:
+        - Webhooks
+      operationId: receiveJobAcceptedWebhook
+      summary: `job.accepted`
+      description: |
+        Исходящий webhook платформы для внешней проекции `JobAccepted`.
+        URL приёмника задаётся статической конфигурацией интеграции и не управляется через API `v0`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobAcceptedWebhookEvent'
+            examples:
+              jobAccepted:
+                value:
+                  eventId: evt-01
+                  eventType: job.accepted
+                  eventVersion: v0
+                  occurredAt: '2026-04-04T09:30:00Z'
+                  job:
+                    jobId: job-01
+                    clientOrderId: WMS-12345
+                    state: ACCEPTED
+                    sourceEndpointId: inbound.main
+                    targetEndpointId: outbound.main
+                    priority: NORMAL
+                    payloadRef:
+                      clientPayloadId: SSCC-001
+                    attributes:
+                      batchId: BATCH-01
+                    createdAt: '2026-04-04T09:30:00Z'
+                    updatedAt: '2026-04-04T09:30:00Z'
+      responses:
+        '200':
+          description: Событие принято.
+        '204':
+          description: Событие принято без тела ответа.
+  jobStateChanged:
+    post:
+      tags:
+        - Webhooks
+      operationId: receiveJobStateChangedWebhook
+      summary: `job.state_changed`
+      description: |
+        Исходящий webhook платформы для внешней проекции `JobStateChanged`.
+        Доставка выполняется по модели `at-least-once`; получатель обязан дедуплицировать события по `eventId`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobStateChangedWebhookEvent'
+            examples:
+              jobStateChanged:
+                value:
+                  eventId: evt-02
+                  eventType: job.state_changed
+                  eventVersion: v0
+                  occurredAt: '2026-04-04T09:45:00Z'
+                  previousState: ACCEPTED
+                  job:
+                    jobId: job-01
+                    clientOrderId: WMS-12345
+                    state: IN_PROGRESS
+                    sourceEndpointId: inbound.main
+                    targetEndpointId: outbound.main
+                    priority: NORMAL
+                    payloadRef:
+                      clientPayloadId: SSCC-001
+                    attributes:
+                      batchId: BATCH-01
+                    createdAt: '2026-04-04T09:30:00Z'
+                    updatedAt: '2026-04-04T09:45:00Z'
+      responses:
+        '200':
+          description: Событие принято.
+        '204':
+          description: Событие принято без тела ответа.
+components:
+  parameters:
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      description: Системный идентификатор `PayloadTransferJob`.
+      schema:
+        type: string
+        minLength: 1
+    ClientOrderId:
+      name: clientOrderId
+      in: path
+      required: true
+      description: Идемпотентный идентификатор клиентского запроса.
+      schema:
+        type: string
+        minLength: 1
+  responses:
+    BadRequest:
+      description: Некорректный формат запроса.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Ресурс не найден.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: Конфликт идемпотентности или недопустимый переход состояния.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    UnprocessableEntity:
+      description: Запрос синтаксически корректен, но нарушает бизнес-ограничения `v0`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    CreatePayloadTransferJobRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - clientOrderId
+        - sourceEndpointId
+        - targetEndpointId
+      properties:
+        clientOrderId:
+          type: string
+          minLength: 1
+          description: |
+            Клиентский идентификатор запроса.
+            Используется как ключ идемпотентности на уровне внешнего контракта.
+        sourceEndpointId:
+          type: string
+          minLength: 1
+          description: Внешний бизнес-адрес исходной конечной точки.
+        targetEndpointId:
+          type: string
+          minLength: 1
+          description: Внешний бизнес-адрес целевой конечной точки.
+        priority:
+          $ref: '#/components/schemas/JobPriority'
+        payloadRef:
+          $ref: '#/components/schemas/PayloadReference'
+        attributes:
+          type: object
+          description: Расширяемый словарь внешних атрибутов запроса.
+          additionalProperties: true
+    PayloadTransferJob:
+      type: object
+      additionalProperties: false
+      required:
+        - jobId
+        - clientOrderId
+        - state
+        - sourceEndpointId
+        - targetEndpointId
+        - priority
+        - createdAt
+        - updatedAt
+      properties:
+        jobId:
+          type: string
+          minLength: 1
+          description: Системный идентификатор задания.
+        clientOrderId:
+          type: string
+          minLength: 1
+          description: Клиентский идентификатор запроса.
+        state:
+          $ref: '#/components/schemas/PayloadTransferJobState'
+        sourceEndpointId:
+          type: string
+          minLength: 1
+          description: Внешний бизнес-адрес исходной конечной точки.
+        targetEndpointId:
+          type: string
+          minLength: 1
+          description: Внешний бизнес-адрес целевой конечной точки.
+        priority:
+          $ref: '#/components/schemas/JobPriority'
+        payloadRef:
+          $ref: '#/components/schemas/PayloadReference'
+        attributes:
+          type: object
+          description: Расширяемый словарь внешних атрибутов запроса.
+          additionalProperties: true
+        reason:
+          $ref: '#/components/schemas/JobReason'
+        createdAt:
+          type: string
+          format: date-time
+          description: Время создания задания.
+        updatedAt:
+          type: string
+          format: date-time
+          description: Время последнего подтверждённого изменения внешней проекции задания.
+        completedAt:
+          type: string
+          format: date-time
+          description: Время завершения задания в терминальном успешном или финальном состоянии.
+    PayloadTransferJobState:
+      type: string
+      description: Внешняя проекция состояния задания.
+      enum:
+        - ACCEPTED
+        - IN_PROGRESS
+        - SUSPENDED
+        - COMPLETED
+        - FAILED
+        - CANCELLED
+    JobPriority:
+      type: string
+      description: Приоритет внешнего задания.
+      enum:
+        - LOW
+        - NORMAL
+        - HIGH
+      default: NORMAL
+    PayloadReference:
+      type: object
+      description: Опциональные внешние идентификаторы грузовой единицы.
+      additionalProperties: true
+      properties:
+        clientPayloadId:
+          type: string
+          minLength: 1
+          description: Внешний идентификатор грузовой единицы, если он известен источнику запроса.
+    JobReason:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          minLength: 1
+          description: Машиночитаемый код причины текущего состояния.
+        message:
+          type: string
+          description: Человекочитаемое пояснение причины.
+    Problem:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - title
+      properties:
+        code:
+          type: string
+          minLength: 1
+        title:
+          type: string
+          minLength: 1
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+    JobAcceptedWebhookEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - eventId
+        - eventType
+        - eventVersion
+        - occurredAt
+        - job
+      properties:
+        eventId:
+          type: string
+          minLength: 1
+        eventType:
+          type: string
+          enum:
+            - job.accepted
+        eventVersion:
+          type: string
+          minLength: 1
+        occurredAt:
+          type: string
+          format: date-time
+        job:
+          $ref: '#/components/schemas/PayloadTransferJob'
+    JobStateChangedWebhookEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - eventId
+        - eventType
+        - eventVersion
+        - occurredAt
+        - previousState
+        - job
+      properties:
+        eventId:
+          type: string
+          minLength: 1
+        eventType:
+          type: string
+          enum:
+            - job.state_changed
+        eventVersion:
+          type: string
+          minLength: 1
+        occurredAt:
+          type: string
+          format: date-time
+        previousState:
+          $ref: '#/components/schemas/PayloadTransferJobState'
+        job:
+          $ref: '#/components/schemas/PayloadTransferJob'

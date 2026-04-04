@@ -3,7 +3,7 @@
 
 **Статус:** Живой документ  
 **Последнее обновление:** 2026-04-04  
-**Связанные артефакты:** ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, Execution-Semantics-v0.md, Station-Site-Integration-v0.md, ADR-004, docs/api/southbound/asyncapi-v0.yaml
+**Связанные артефакты:** ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, Execution-Semantics-v0.md, Station-Site-Integration-v0.md, Northbound-API-v0.md, ADR-004, docs/api/northbound/openapi-v0.yaml, docs/api/southbound/asyncapi-v0.yaml
 
 ---
 
@@ -470,8 +470,8 @@ payload
 
 ## 7. Что сознательно отложено
 
-- машиночитаемая спецификация платформенных событий верхнего уровня;
-- отдельные northbound payload-варианты поверх внутренних событий;
+- машиночитаемая спецификация полного платформенного event-stream beyond `Northbound API v0`;
+- дополнительные northbound payload-варианты beyond `job.accepted` и `job.state_changed`;
 - event versioning policy beyond `v0`;
 - расширенный каталог причин `reasonCode`;
 - события административного и операторского управления вне базового контура исполнения.
