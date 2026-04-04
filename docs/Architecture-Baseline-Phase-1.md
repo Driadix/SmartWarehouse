@@ -3,7 +3,7 @@
 
 **Статус:** Базовый документ текущей реализации  
 **Последнее обновление:** 2026-04-03  
-**Связанные артефакты:** Glossary, ArchitecturalVision.md, DomainModel-v0, Topology-Configuration-Model-v0.md, Execution-Semantics-v0.md, Station-Site-Integration-v0.md, Capability-Catalog-Phase-1.md, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007
+**Связанные артефакты:** Glossary, ArchitecturalVision.md, DomainModel-v0, Topology-Configuration-Model-v0.md, Execution-Semantics-v0.md, Station-Site-Integration-v0.md, Capability-Catalog-Phase-1.md, Event-Catalog-v0.md, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007
 
 ---
 
@@ -228,3 +228,4 @@ slotCount   = 1
 - [Execution-Semantics-v0.md](/c:/Projects/SmartWarehouse/docs/Execution-Semantics-v0.md)
 - [Station-Site-Integration-v0.md](/c:/Projects/SmartWarehouse/docs/Station-Site-Integration-v0.md)
 - [Capability-Catalog-Phase-1.md](/c:/Projects/SmartWarehouse/docs/Capability-Catalog-Phase-1.md)
+- [Event-Catalog-v0.md](/c:/Projects/SmartWarehouse/docs/Event-Catalog-v0.md)

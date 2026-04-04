@@ -4,7 +4,7 @@
 **Версия:** 1.5  
 **Статус:** Живой документ  
 **Последнее обновление:** 2026-04-03  
-**Связанные артефакты:** Glossary, Architecture-Baseline-Phase-1, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, DomainModel-v0, Topology-Configuration-Model-v0, Execution-Semantics-v0, Station-Site-Integration-v0, Capability-Catalog-Phase-1, Event Catalog (в разработке), API Spec (в разработке)
+**Связанные артефакты:** Glossary, Architecture-Baseline-Phase-1, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, DomainModel-v0, Topology-Configuration-Model-v0, Execution-Semantics-v0, Station-Site-Integration-v0, Capability-Catalog-Phase-1, Event-Catalog-v0, API Spec (в разработке)
 
 ---
 
@@ -41,7 +41,7 @@
 - **`Station-Site-Integration-v0`:** правила интеграции пассивных станций и site-сигналов с `WCS`.
 - **`Capability-Catalog-Phase-1`:** минимальный каталог статических и активных возможностей базового состава.
 - **`docs/api/southbound/asyncapi-v0.yaml`:** машиночитаемая спецификация нижнего контракта v0 в формате `AsyncAPI`.
-- **Каталог событий (`Event Catalog`):** полный каталог событий (в разработке).
+- **`Event-Catalog-v0`:** нормативный каталог канонических платформенных событий текущего базового состава.
 - **Спецификация API (`API Spec`):** спецификации верхнего и нижнего интеграционных интерфейсов (в разработке).
 
 ---
@@ -323,7 +323,7 @@ VerticalCarrierPositionChanged
 ShuttleMovementModeChanged
 ```
 
-Полный каталог полей, вариантов событий и имён событий, зависящих от базового состава реализации, выносится в отдельный каталог событий (`Event Catalog`).
+Полный каталог полей, вариантов событий и правил публикации текущего базового состава вынесен в [docs/Event-Catalog-v0.md](/c:/Projects/SmartWarehouse/docs/Event-Catalog-v0.md).
 
 ---
 
