@@ -1,4 +1,4 @@
-# Каталог возможностей Phase 1
+# Каталог возможностей фазы 1
 ### Базовый состав: `Shuttle3D`, `HybridLift`, пассивные станции
 
 **Статус:** Живой документ  
@@ -14,7 +14,7 @@
 - выбора ресурса в `WES`;
 - проверки исполнимости шага в `WCS`;
 - нормализации `StateSnapshot` и `CapabilityChanged`;
-- отделения аппаратных возможностей устройства от реально активированного поведения платформы.
+- отделения аппаратных возможностей устройства от поведения, действительно активированного на уровне платформы.
 
 ---
 
@@ -45,11 +45,11 @@
 
 | CapabilityId | Тип | Смысл |
 |---|---|---|
-| `motion.windowed` | static/active | Исполнение движения по короткому окну `GrantMotionWindow`. |
-| `transfer.station.passive` | static/active | Работа с пассивной станцией через `StationTransfer`. |
-| `transfer.lift.hybridPassenger` | static/active | Режим `SHUTTLE_RIDES_HYBRID_LIFT_WITH_PAYLOAD`. |
-| `mode.carrierPassenger` | static/active | Переход в `CARRIER_PASSENGER` и наследование положения от лифта. |
-| `action.stationLocal` | optional | Поддержка `ExecuteAction`, если действие на станции выполняется самим шаттлом. |
+| `motion.windowed` | статическая / активная | Исполнение движения по короткому окну `GrantMotionWindow`. |
+| `transfer.station.passive` | статическая / активная | Работа с пассивной станцией через `StationTransfer`. |
+| `transfer.lift.hybridPassenger` | статическая / активная | Режим `SHUTTLE_RIDES_HYBRID_LIFT_WITH_PAYLOAD`. |
+| `mode.carrierPassenger` | статическая / активная | Переход в `CARRIER_PASSENGER` и наследование положения от лифта. |
+| `action.stationLocal` | опциональная | Поддержка `ExecuteAction`, если действие на станции выполняется самим шаттлом. |
 
 ---
 
@@ -57,10 +57,10 @@
 
 | CapabilityId | Тип | Смысл |
 |---|---|---|
-| `motion.vertical.singleSlot` | static/active | Вертикальное перемещение с одним местом для шаттла. |
-| `transfer.lift.receiveShuttle` | static/active | Приём шаттла на `CarrierNode` / `TransferPoint`. |
-| `transfer.lift.dispatchShuttle` | static/active | Выдача шаттла на целевом уровне. |
-| `occupancy.singleShuttle` | static/active | Поддержка не более одного шаттла одновременно. |
+| `motion.vertical.singleSlot` | статическая / активная | Вертикальное перемещение с одним местом для шаттла. |
+| `transfer.lift.receiveShuttle` | статическая / активная | Приём шаттла на `CarrierNode` / `TransferPoint`. |
+| `transfer.lift.dispatchShuttle` | статическая / активная | Выдача шаттла на целевом уровне. |
+| `occupancy.singleShuttle` | статическая / активная | Поддержка не более одного шаттла одновременно. |
 
 ---
 
@@ -78,7 +78,7 @@
 
 ## 7. Минимальные требования к `StateSnapshot`
 
-Если capability активна, снимок состояния должен позволять `WCS` проверить её применимость:
+Если возможность активна, снимок состояния должен позволять `WCS` проверить её применимость:
 
 - для `motion.windowed` требуется `currentNode` и `executionState`;
 - для `mode.carrierPassenger` требуются `movementMode` и `carrierId`;

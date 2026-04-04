@@ -1,23 +1,23 @@
 openapi: 3.2.0
 info:
-  title: SmartWarehouse Northbound API v0
+  title: SmartWarehouse: верхний интеграционный интерфейс v0
   version: 0.1.0
   description: |
     Машиночитаемая спецификация внешнего интеграционного контракта текущего базового состава.
     Контракт ограничен постановкой и отслеживанием `PayloadTransferJob`.
-    Входящий поток реализуется через `REST`, исходящий поток - через статически настроенные `webhook`.
-    Выбор конкретного профиля аутентификации, URL webhook-приёмников и сетевого доступа остаётся профилем развёртывания и не нормируется `v0`.
+    Входящий поток реализуется через `REST`, исходящий поток - через статически настроенные вебхуки.
+    Выбор конкретного профиля аутентификации, URL приёмников вебхуков и сетевого доступа остаётся профилем развёртывания и не нормируется `v0`.
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 tags:
-  - name: Payload Transfer Jobs
+  - name: Задания переноса грузовой единицы
     description: Входящий контракт постановки и чтения задания на перенос грузовой единицы.
-  - name: Webhooks
+  - name: Вебхуки
     description: Исходящие вызовы платформы к статически настроенному приёмнику внешней системы.
 paths:
   /api/v0/payload-transfer-jobs:
     post:
       tags:
-        - Payload Transfer Jobs
+        - Задания переноса грузовой единицы
       operationId: createPayloadTransferJob
       summary: Создать `PayloadTransferJob`.
       description: |
@@ -75,7 +75,7 @@ paths:
   /api/v0/payload-transfer-jobs/{jobId}:
     get:
       tags:
-        - Payload Transfer Jobs
+        - Задания переноса грузовой единицы
       operationId: getPayloadTransferJobById
       summary: Получить задание по `jobId`.
       parameters:
@@ -92,7 +92,7 @@ paths:
   /api/v0/payload-transfer-jobs/by-client-order/{clientOrderId}:
     get:
       tags:
-        - Payload Transfer Jobs
+        - Задания переноса грузовой единицы
       operationId: getPayloadTransferJobByClientOrderId
       summary: Найти задание по `clientOrderId`.
       parameters:
@@ -109,7 +109,7 @@ paths:
   /api/v0/payload-transfer-jobs/{jobId}/cancel:
     post:
       tags:
-        - Payload Transfer Jobs
+        - Задания переноса грузовой единицы
       operationId: cancelPayloadTransferJob
       summary: Запросить отмену задания.
       description: |
@@ -139,11 +139,11 @@ webhooks:
   jobAccepted:
     post:
       tags:
-        - Webhooks
+        - Вебхуки
       operationId: receiveJobAcceptedWebhook
       summary: `job.accepted`
       description: |
-        Исходящий webhook платформы для внешней проекции `JobAccepted`.
+        Исходящий вебхук платформы для внешней проекции `JobAccepted`.
         URL приёмника задаётся статической конфигурацией интеграции и не управляется через API `v0`.
       requestBody:
         required: true
@@ -179,12 +179,12 @@ webhooks:
   jobStateChanged:
     post:
       tags:
-        - Webhooks
+        - Вебхуки
       operationId: receiveJobStateChangedWebhook
       summary: `job.state_changed`
       description: |
-        Исходящий webhook платформы для внешней проекции `JobStateChanged`.
-        Доставка выполняется по модели `at-least-once`; получатель обязан дедуплицировать события по `eventId`.
+        Исходящий вебхук платформы для внешней проекции `JobStateChanged`.
+        Доставка выполняется по модели «как минимум один раз»; получатель обязан дедуплицировать события по `eventId`.
       requestBody:
         required: true
         content:

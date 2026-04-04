@@ -9,7 +9,7 @@
 
 ## 1. Назначение
 
-Документ фиксирует минимальные правила исполнения, достаточные для того, чтобы `WCS`, симулятор и `Digital Twin` одинаково трактовали:
+Документ фиксирует минимальные правила исполнения, позволяющие `WCS`, симулятору и `Digital Twin` одинаково трактовать:
 
 - что означает плановый `ExecutionTask`;
 - как материализуются шаги `Navigate`, `StationTransfer`, `CarrierTransfer`;
@@ -22,7 +22,7 @@
 
 ## 2. Основные различия
 
-### 2.1. `ExecutionTask` и `RuntimePhase`
+### 2.1. `ExecutionTask` и внутренняя фаза исполнения (`RuntimePhase`)
 
 - `ExecutionTask` — плановый макрошаг уровня `WES`.
 - `RuntimePhase` — внутренняя фаза исполнения внутри `WCS`.
@@ -53,7 +53,7 @@
 2. `WCS` владеет выбором и сменой `RuntimePhase`.
 3. Шаг не считается завершённым по таймеру или по предположению.
 4. Изменение физического удержания груза происходит только по подтверждённому факту.
-5. Для пассивной станции `WCS` не ждёт station-side southbound-команд и использует `Station/Site Integration Adapter` как источник готовности и фактов передачи.
+5. Для пассивной станции `WCS` не ждёт команд со стороны станции на уровне нижнего интеграционного интерфейса и использует `Station/Site Integration Adapter` как источник готовности и фактов передачи.
 6. Для пассивной сервисной точки `WCS` не ждёт отдельного подтверждения от станции.
 7. Если `StateSnapshot` не доказывает постусловия шага, шаг остаётся `Suspended` или продолжается после повторного согласования.
 
@@ -65,7 +65,7 @@
 
 `Navigate` применяется для перемещения устройства по графу без операции передачи.
 
-Типовые `RuntimePhase`:
+Типовые внутренние фазы исполнения:
 
 ```text
 Accepted -> MotionAuthorized -> InMotion -> Arrived -> Completed | Suspended
@@ -83,13 +83,13 @@ Accepted -> MotionAuthorized -> InMotion -> Arrived -> Completed | Suspended
 
 - `Navigate` к `ChargeNode` завершается по `NodeReached(targetNode)`;
 - `Navigate` к `ServiceNode` завершается по `NodeReached(targetNode)`;
-- дальнейшая зарядка или сервисное воздействие не создают отдельной station-side фазы, если точка остаётся пассивной.
+- дальнейшая зарядка или сервисное воздействие не создают отдельной фазы со стороны станции, если точка остаётся пассивной.
 
 ### 4.2. `StationTransfer`
 
 `StationTransfer` применяется только для пассивных `LoadStation` и `UnloadStation` текущего базового состава.
 
-Типовые `RuntimePhase`:
+Типовые внутренние фазы исполнения:
 
 ```text
 Accepted -> ReachingBoundary -> BoundaryPositionConfirmed -> CommitCustody -> Completed | Suspended
@@ -103,20 +103,20 @@ Accepted -> ReachingBoundary -> BoundaryPositionConfirmed -> CommitCustody -> Co
 - изменение физического удержания груза фиксируется только после подтверждённого факта передачи, полученного через `Station/Site Integration Adapter`;
 - завершение шага возможно только после достижения постусловий по `PayloadCustodyChanged`.
 
-Подварианты:
+Варианты:
 
 #### `LoadStation -> Shuttle3D`
 
 Постусловия шага:
 
-- шаттл подтверждённо находится на `StationNode`;
+- подтверждено, что шаттл находится на `StationNode`;
 - физическое удержание груза перешло к `Shuttle3D`.
 
 #### `Shuttle3D -> UnloadStation`
 
 Постусловия шага:
 
-- шаттл подтверждённо находится на `StationNode`;
+- подтверждено, что шаттл находится на `StationNode`;
 - физическое удержание груза перешло к `UnloadStation`.
 
 Строгое правило:
@@ -128,7 +128,7 @@ Accepted -> ReachingBoundary -> BoundaryPositionConfirmed -> CommitCustody -> Co
 
 `CarrierTransfer` описывает межуровневую передачу в режиме `SHUTTLE_RIDES_HYBRID_LIFT_WITH_PAYLOAD`.
 
-Типовые `RuntimePhase`:
+Типовые внутренние фазы исполнения:
 
 ```text
 Accepted
@@ -158,7 +158,7 @@ Accepted
 
 Постусловия шага:
 
-- шаттл подтверждённо находится в `targetTransferPoint`;
+- подтверждено, что шаттл находится в `targetTransferPoint`;
 - шаттл больше не является пассажиром лифта;
 - лифт более не занят этим шаттлом;
 - физическое удержание груза осталось у шаттла.
@@ -179,17 +179,17 @@ Accepted
 
 | Подтверждённый снимок состояния | Допустимый исход |
 |---|---|
-| шаттл на `StationNode`, `PayloadCustody` ещё у исходной стороны, transfer-fact от `Station/Site Integration Adapter` отсутствует | Безопасно продолжить шаг |
-| шаттл на `StationNode`, `PayloadCustody` уже у принимающей стороны, transfer-fact от `Station/Site Integration Adapter` подтверждён | Безопасно завершить шаг |
+| шаттл на `StationNode`, `PayloadCustody` ещё у исходной стороны, подтверждённый факт передачи от `Station/Site Integration Adapter` отсутствует | Безопасно продолжить шаг |
+| шаттл на `StationNode`, `PayloadCustody` уже у принимающей стороны, подтверждённый факт передачи от `Station/Site Integration Adapter` получен | Безопасно завершить шаг |
 | `PayloadCustody` изменилась, но шаттл не подтверждён на `StationNode` | Эскалировать как противоречивое состояние |
-| adapter-fact противоречит `PayloadCustody` или текущему направлению шага | Эскалировать как противоречивое состояние |
+| факт от адаптера противоречит `PayloadCustody` или текущему направлению шага | Эскалировать как противоречивое состояние |
 
 ### 5.3. `CarrierTransfer`
 
 | Подтверждённый снимок состояния | Допустимый исход |
 |---|---|
 | шаттл `AUTONOMOUS`, `carrierId = null`, находится у исходного `TransferPoint`; лифт у исходного `CarrierNode` | Безопасно продолжить фазу посадки |
-| шаттл `CARRIER_PASSENGER`, `carrierId = liftId`, лифт подтверждённо содержит этот шаттл | Безопасно продолжить межуровневую передачу |
+| шаттл `CARRIER_PASSENGER`, `carrierId = liftId`, подтверждено, что лифт содержит этот шаттл | Безопасно продолжить межуровневую передачу |
 | шаттл `AUTONOMOUS`, `carrierId = null`, находится у целевого `TransferPoint`, лифт больше не содержит этот шаттл | Безопасно завершить шаг |
 | шаттл и лифт дают противоречивые поля `movementMode`, `carrierId`, `occupiedShuttleId` | Эскалировать на перепланирование или операторское вмешательство |
 

@@ -1,5 +1,5 @@
-# Contract Acceptance Matrix v0
-### `Northbound API v0` и минимальные сценарии приёмки через контракт и симуляцию
+# Матрица приёмки контракта v0
+### Верхний интеграционный интерфейс `Northbound API v0` и минимальные сценарии приёмки через контракт и симуляцию
 
 **Статус:** Живой документ  
 **Последнее обновление:** 2026-04-04  
@@ -14,47 +14,47 @@
 Цели документа:
 
 - сделать внешний контракт исполнимым и проверяемым;
-- связать синхронные ответы API, webhook-проекции и итоговые состояния `Job` с воспроизводимыми сценариями;
+- связать синхронные ответы API, проекции вебхуков и итоговые состояния `Job` с воспроизводимыми сценариями;
 - не превращать приёмку в полный тест-план всей платформы.
 
-Матрица является мостом между:
+Матрица связывает:
 
-- спецификацией контракта;
-- каталожными событиями платформы;
-- сценариями симуляции и acceptance-тестами.
+- спецификацию контракта;
+- каталог событий платформы;
+- сценарии симуляции и приёмочные тесты.
 
 ---
 
 ## 2. Область и границы
 
-Матрица `v0` покрывает:
+Матрица `v0` охватывает:
 
 - только `Northbound API v0` для `PayloadTransferJob`;
 - только текущий базовый состав реализации;
 - только те сценарии, которые нужны для старта разработки, симуляции и первого контрактного тестирования.
 
-Матрица `v0` не покрывает:
+Матрица `v0` не охватывает:
 
 - нагрузочные и отказоустойчивые испытания на целевых объёмах;
-- security-профили и transport-level аутентификацию;
-- operator/admin API;
+- профили безопасности и аутентификацию транспортного уровня;
+- интерфейс операторского и административного управления;
 - подробный порядок всех внутренних событий `WCS`.
 
 ---
 
 ## 3. Общие правила приёмки
 
-### 3.1. Граница между sync rejection и runtime execution
+### 3.1. Граница между синхронным отклонением и исполнением после принятия
 
 - ошибки формы запроса, идемпотентности, адресации и статической достижимости должны выявляться синхронно на входе `Northbound API`;
-- runtime-проблемы после принятия задания не превращаются в синхронный отказ создания задания;
+- проблемы во время исполнения после принятия задания не превращаются в синхронный отказ создания задания;
 - если `endpointId` валиден, но допустимого маршрута в текущей `Topology Configuration` не существует, запрос должен отклоняться синхронно с `422`.
 
 ### 3.2. Внешняя наблюдаемость
 
 - `job.accepted` может быть опубликован не более одного раза для одного `jobId`;
 - `job.state_changed` не должен появляться раньше `job.accepted` для того же `jobId`;
-- причинная последовательность webhook-событий фиксируется только в пределах одного `jobId`;
+- причинная последовательность вебхук-событий фиксируется только в пределах одного `jobId`;
 - повторный `POST` с тем же `clientOrderId` и тем же нормализованным телом не должен создавать новый `jobId` и не должен публиковать второй `job.accepted`.
 
 ### 3.3. Минимальные внутренние факты платформы
@@ -86,54 +86,54 @@
 
 ### 3.5. Уровни автоматизации
 
-- `contract-only` - достаточно HTTP-контракта без симуляции исполнения;
-- `contract+projection` - требуется проверка HTTP-контракта, webhook-доставки и read-model проекции;
-- `contract+simulation` - требуется симуляция исполнения `WCS` и нижнего контура.
+- `контракт` - достаточно проверки HTTP-контракта без симуляции исполнения;
+- `контракт+проекция` - требуется проверка HTTP-контракта, доставки вебхуков и проекции состояния;
+- `контракт+симуляция` - требуется симуляция исполнения `WCS` и нижнего контура.
 
 ---
 
 ## 4. Общие фикстуры
 
-### `F-01 NominalRoute`
+### `F-01` Номинальный маршрут
 
 - в конфигурации существуют `endpointId = inbound.main` и `endpointId = outbound.main`;
 - между ними есть допустимый маршрут;
 - устройства доступны;
 - станции на границе маршрута готовы к работе.
 
-### `F-02 NoRouteBetweenValidEndpoints`
+### `F-02` Нет маршрута между валидными конечными точками
 
 - `endpointId` валидны;
 - допустимого маршрута между ними в текущей конфигурации нет.
 
-### `F-03 RuntimeStationBlocked`
+### `F-03` Станция блокируется во время исполнения
 
 - задание может быть принято;
 - во время исполнения станция или её граница переходят в `BLOCKED` или `OFFLINE`.
 
-### `F-04 UnrecoverableExecutionError`
+### `F-04` Нерешаемая ошибка исполнения
 
 - задание принято;
 - во время исполнения `WCS` получает нерешаемый для локального ретрая отказ или `ExecutionRejected`.
 
-### `F-05 DeviceSessionLoss`
+### `F-05` Потеря сеанса устройства
 
 - задание принято и уже находится в активном исполнении;
 - во время исполнения теряется `DeviceSession` активного устройства.
 
-### `F-06 ExistingAcceptedJob`
+### `F-06` Существующее принятое задание
 
 - существует ранее созданный `PayloadTransferJob` в состоянии `ACCEPTED`.
 
-### `F-07 ExistingInProgressJob`
+### `F-07` Существующее задание в исполнении
 
 - существует ранее созданный `PayloadTransferJob` в состоянии `IN_PROGRESS`.
 
-### `F-08 ExistingCancelledJob`
+### `F-08` Существующее отменённое задание
 
 - существует ранее созданный `PayloadTransferJob` в состоянии `CANCELLED`.
 
-### `F-09 ExistingCompletedJob`
+### `F-09` Существующее завершённое задание
 
 - существует ранее созданный `PayloadTransferJob` в состоянии `COMPLETED`.
 
@@ -141,258 +141,258 @@
 
 ## 5. Сводная матрица
 
-| ScenarioId | Category | Stimulus | Sync expectation | Webhook expectation | Final state | Automation |
+| Идентификатор сценария | Категория | Стимул | Ожидание синхронного ответа | Ожидание по вебхукам | Итоговое состояние | Автоматизация |
 |---|---|---|---|---|---|---|
-| `NB-REQ-001` | request-acceptance | валидный `POST` | `202 Accepted` | `job.accepted` | `ACCEPTED` | `contract+projection` |
-| `NB-IDEMP-001` | idempotency | повтор того же `POST` | `200 OK`, тот же `jobId` | нет новых webhook | без изменений | `contract+projection` |
-| `NB-IDEMP-002` | idempotency | тот же `clientOrderId`, другое тело | `409 Conflict` | нет webhook | без нового `Job` | `contract-only` |
-| `NB-VAL-001` | validation | неизвестный `sourceEndpointId` | `422` | нет webhook | без нового `Job` | `contract-only` |
-| `NB-VAL-002` | validation | неизвестный `targetEndpointId` | `422` | нет webhook | без нового `Job` | `contract-only` |
-| `NB-VAL-003` | validation | одинаковые source/target | `422` | нет webhook | без нового `Job` | `contract-only` |
-| `NB-VAL-004` | validation | валидные endpoint, но нет маршрута | `422` | нет webhook | без нового `Job` | `contract-only` |
-| `NB-READ-001` | read-model | `GET` по существующему `jobId` | `200 OK` | нет webhook | без изменений | `contract+projection` |
-| `NB-READ-002` | read-model | `GET` по существующему `clientOrderId` | `200 OK` | нет webhook | без изменений | `contract+projection` |
-| `NB-READ-003` | read-model | `GET` по отсутствующему `jobId` | `404 Not Found` | нет webhook | нет ресурса | `contract-only` |
-| `NB-LIFE-001` | lifecycle | исполнить принятое задание до конца | уже принято | `job.state_changed` до `COMPLETED` | `COMPLETED` | `contract+simulation` |
-| `NB-LIFE-002` | lifecycle | блокировка станции во время исполнения | уже принято | `job.state_changed` до `SUSPENDED` | `SUSPENDED` | `contract+simulation` |
-| `NB-LIFE-003` | lifecycle | нерешаемая ошибка исполнения | уже принято | `job.state_changed` до `FAILED` | `FAILED` | `contract+simulation` |
-| `NB-CANCEL-001` | cancellation | `POST cancel` для активного задания | `202 Accepted` | `job.state_changed` до `CANCELLED` | `CANCELLED` | `contract+simulation` |
-| `NB-CANCEL-002` | cancellation | `POST cancel` для уже отменённого задания | `200 OK` | нет новых webhook | `CANCELLED` | `contract+projection` |
-| `NB-CANCEL-003` | cancellation | `POST cancel` для `COMPLETED` | `409 Conflict` | нет webhook | `COMPLETED` | `contract-only` |
-| `NB-REC-001` | recovery | потеря `DeviceSession` во время исполнения | уже принято | `job.state_changed` до `SUSPENDED` | `SUSPENDED` | `contract+simulation` |
+| `NB-REQ-001` | приём запроса | валидный `POST` | `202 Accepted` | `job.accepted` | `ACCEPTED` | `контракт+проекция` |
+| `NB-IDEMP-001` | идемпотентность | повтор того же `POST` | `200 OK`, тот же `jobId` | нет новых вебхуков | без изменений | `контракт+проекция` |
+| `NB-IDEMP-002` | идемпотентность | тот же `clientOrderId`, другое тело | `409 Conflict` | нет вебхуков | без нового `Job` | `контракт` |
+| `NB-VAL-001` | валидация | неизвестный `sourceEndpointId` | `422` | нет вебхуков | без нового `Job` | `контракт` |
+| `NB-VAL-002` | валидация | неизвестный `targetEndpointId` | `422` | нет вебхуков | без нового `Job` | `контракт` |
+| `NB-VAL-003` | валидация | совпадающие `sourceEndpointId` и `targetEndpointId` | `422` | нет вебхуков | без нового `Job` | `контракт` |
+| `NB-VAL-004` | валидация | валидные endpoint, но нет маршрута | `422` | нет вебхуков | без нового `Job` | `контракт` |
+| `NB-READ-001` | чтение проекции | `GET` по существующему `jobId` | `200 OK` | нет вебхуков | без изменений | `контракт+проекция` |
+| `NB-READ-002` | чтение проекции | `GET` по существующему `clientOrderId` | `200 OK` | нет вебхуков | без изменений | `контракт+проекция` |
+| `NB-READ-003` | чтение проекции | `GET` по отсутствующему `jobId` | `404 Not Found` | нет вебхуков | нет ресурса | `контракт` |
+| `NB-LIFE-001` | жизненный цикл | исполнить принятое задание до конца | уже принято | `job.state_changed` до `COMPLETED` | `COMPLETED` | `контракт+симуляция` |
+| `NB-LIFE-002` | жизненный цикл | блокировка станции во время исполнения | уже принято | `job.state_changed` до `SUSPENDED` | `SUSPENDED` | `контракт+симуляция` |
+| `NB-LIFE-003` | жизненный цикл | нерешаемая ошибка исполнения | уже принято | `job.state_changed` до `FAILED` | `FAILED` | `контракт+симуляция` |
+| `NB-CANCEL-001` | отмена | `POST cancel` для активного задания | `202 Accepted` | `job.state_changed` до `CANCELLED` | `CANCELLED` | `контракт+симуляция` |
+| `NB-CANCEL-002` | отмена | `POST cancel` для уже отменённого задания | `200 OK` | нет новых вебхуков | `CANCELLED` | `контракт+проекция` |
+| `NB-CANCEL-003` | отмена | `POST cancel` для `COMPLETED` | `409 Conflict` | нет вебхуков | `COMPLETED` | `контракт` |
+| `NB-REC-001` | восстановление | потеря `DeviceSession` во время исполнения | уже принято | `job.state_changed` до `SUSPENDED` | `SUSPENDED` | `контракт+симуляция` |
 
 ---
 
 ## 6. Карточки сценариев
 
-### `NB-REQ-001` Create valid job
+### `NB-REQ-001` Создание корректного задания
 
-- `Category`: `request-acceptance`
-- `Fixture`: `F-01 NominalRoute`
-- `Preconditions`: задания с тем же `clientOrderId` не существует
-- `Stimulus`: `POST /api/v0/payload-transfer-jobs` с валидным телом
-- `Expected Sync Response`: `202 Accepted`, `Location` указывает на созданный ресурс, тело ответа содержит `jobId`, `clientOrderId`, `state = ACCEPTED`
-- `Expected Webhook Sequence`: один `job.accepted`
-- `Expected Final Job State`: `ACCEPTED`
-- `Required Platform Facts`: `JobAccepted`
-- `Negative Assertions`: нет `job.state_changed` раньше `job.accepted`, нет второго `job.accepted`
-- `Automation Target`: `contract+projection`
+- `Категория`: `приём запроса`
+- `Фикстура`:  `F-01` Номинальный маршрут
+- `Предусловия`:  задания с тем же `clientOrderId` не существует
+- `Стимул`:  `POST /api/v0/payload-transfer-jobs` с валидным телом
+- `Ожидаемый синхронный ответ`:  `202 Accepted`, `Location` указывает на созданный ресурс, тело ответа содержит `jobId`, `clientOrderId`, `state = ACCEPTED`
+- `Ожидаемая последовательность вебхуков`:  один `job.accepted`
+- `Ожидаемое итоговое состояние задания`:  `ACCEPTED`
+- `Обязательные платформенные факты`:  `JobAccepted`
+- `Негативные утверждения`:  нет `job.state_changed` раньше `job.accepted`, нет второго `job.accepted`
+- `Целевой уровень автоматизации`:  `контракт+проекция`
 
-### `NB-IDEMP-001` Replay same normalized request
+### `NB-IDEMP-001` Повтор того же нормализованного запроса
 
-- `Category`: `idempotency`
-- `Fixture`: существующий `Job` из `NB-REQ-001`
-- `Preconditions`: повторяется тот же `clientOrderId` и то же нормализованное тело
-- `Stimulus`: повторный `POST /api/v0/payload-transfer-jobs`
-- `Expected Sync Response`: `200 OK`, тот же `jobId`, та же внешняя проекция задания
-- `Expected Webhook Sequence`: отсутствует
-- `Expected Final Job State`: без изменений
-- `Required Platform Facts`: новый `JobAccepted` отсутствует
-- `Negative Assertions`: не создаётся второй `Job`, не публикуется второй `job.accepted`
-- `Automation Target`: `contract+projection`
+- `Категория`: `идемпотентность`
+- `Фикстура`:  существующий `Job` из `NB-REQ-001`
+- `Предусловия`:  повторяется тот же `clientOrderId` и то же нормализованное тело
+- `Стимул`:  повторный `POST /api/v0/payload-transfer-jobs`
+- `Ожидаемый синхронный ответ`:  `200 OK`, тот же `jobId`, та же внешняя проекция задания
+- `Ожидаемая последовательность вебхуков`:  отсутствует
+- `Ожидаемое итоговое состояние задания`:  без изменений
+- `Обязательные платформенные факты`:  новый `JobAccepted` отсутствует
+- `Негативные утверждения`:  не создаётся второй `Job`, не публикуется второй `job.accepted`
+- `Целевой уровень автоматизации`:  `контракт+проекция`
 
-### `NB-IDEMP-002` Replay with same `clientOrderId` and different body
+### `NB-IDEMP-002` Повтор с тем же `clientOrderId` и другим телом
 
-- `Category`: `idempotency`
-- `Fixture`: существующий `Job` из `NB-REQ-001`
-- `Preconditions`: меняется хотя бы одно нормализуемое поле запроса
-- `Stimulus`: повторный `POST /api/v0/payload-transfer-jobs` с тем же `clientOrderId` и другим телом
-- `Expected Sync Response`: `409 Conflict`, `Problem.code = IDEMPOTENCY_CONFLICT`
-- `Expected Webhook Sequence`: отсутствует
-- `Expected Final Job State`: исходный `Job` не изменён, новый `Job` не создан
-- `Required Platform Facts`: новые `JobAccepted` и `JobStateChanged` отсутствуют
-- `Negative Assertions`: не возникает новый `jobId`
-- `Automation Target`: `contract-only`
+- `Категория`: `идемпотентность`
+- `Фикстура`:  существующий `Job` из `NB-REQ-001`
+- `Предусловия`:  меняется хотя бы одно нормализуемое поле запроса
+- `Стимул`:  повторный `POST /api/v0/payload-transfer-jobs` с тем же `clientOrderId` и другим телом
+- `Ожидаемый синхронный ответ`:  `409 Conflict`, `Problem.code = IDEMPOTENCY_CONFLICT`
+- `Ожидаемая последовательность вебхуков`:  отсутствует
+- `Ожидаемое итоговое состояние задания`:  исходный `Job` не изменён, новый `Job` не создан
+- `Обязательные платформенные факты`:  новые `JobAccepted` и `JobStateChanged` отсутствуют
+- `Негативные утверждения`:  не возникает новый `jobId`
+- `Целевой уровень автоматизации`:  `контракт`
 
-### `NB-VAL-001` Unknown source endpoint
+### `NB-VAL-001` Неизвестная исходная конечная точка
 
-- `Category`: `validation`
-- `Fixture`: отсутствует `sourceEndpointId` в `Topology Configuration`
-- `Preconditions`: `targetEndpointId` валиден
-- `Stimulus`: `POST /api/v0/payload-transfer-jobs`
-- `Expected Sync Response`: `422 Unprocessable Entity`, `Problem.code = UNKNOWN_SOURCE_ENDPOINT`
-- `Expected Webhook Sequence`: отсутствует
-- `Expected Final Job State`: новый `Job` не создаётся
-- `Required Platform Facts`: отсутствуют
-- `Negative Assertions`: нет `JobAccepted`
-- `Automation Target`: `contract-only`
+- `Категория`:  `валидация`
+- `Фикстура`:  отсутствует `sourceEndpointId` в `Topology Configuration`
+- `Предусловия`:  `targetEndpointId` валиден
+- `Стимул`:  `POST /api/v0/payload-transfer-jobs`
+- `Ожидаемый синхронный ответ`:  `422 Unprocessable Entity`, `Problem.code = UNKNOWN_SOURCE_ENDPOINT`
+- `Ожидаемая последовательность вебхуков`:  отсутствует
+- `Ожидаемое итоговое состояние задания`:  новый `Job` не создаётся
+- `Обязательные платформенные факты`:  отсутствуют
+- `Негативные утверждения`:  нет `JobAccepted`
+- `Целевой уровень автоматизации`:  `контракт`
 
-### `NB-VAL-002` Unknown target endpoint
+### `NB-VAL-002` Неизвестная целевая конечная точка
 
-- `Category`: `validation`
-- `Fixture`: отсутствует `targetEndpointId` в `Topology Configuration`
-- `Preconditions`: `sourceEndpointId` валиден
-- `Stimulus`: `POST /api/v0/payload-transfer-jobs`
-- `Expected Sync Response`: `422 Unprocessable Entity`, `Problem.code = UNKNOWN_TARGET_ENDPOINT`
-- `Expected Webhook Sequence`: отсутствует
-- `Expected Final Job State`: новый `Job` не создаётся
-- `Required Platform Facts`: отсутствуют
-- `Negative Assertions`: нет `JobAccepted`
-- `Automation Target`: `contract-only`
+- `Категория`:  `валидация`
+- `Фикстура`:  отсутствует `targetEndpointId` в `Topology Configuration`
+- `Предусловия`:  `sourceEndpointId` валиден
+- `Стимул`:  `POST /api/v0/payload-transfer-jobs`
+- `Ожидаемый синхронный ответ`:  `422 Unprocessable Entity`, `Problem.code = UNKNOWN_TARGET_ENDPOINT`
+- `Ожидаемая последовательность вебхуков`:  отсутствует
+- `Ожидаемое итоговое состояние задания`:  новый `Job` не создаётся
+- `Обязательные платформенные факты`:  отсутствуют
+- `Негативные утверждения`:  нет `JobAccepted`
+- `Целевой уровень автоматизации`:  `контракт`
 
-### `NB-VAL-003` Identical source and target
+### `NB-VAL-003` Совпадающие исходная и целевая точки
 
-- `Category`: `validation`
-- `Fixture`: оба `endpointId` валидны
-- `Preconditions`: `sourceEndpointId == targetEndpointId`
-- `Stimulus`: `POST /api/v0/payload-transfer-jobs`
-- `Expected Sync Response`: `422 Unprocessable Entity`, `Problem.code = IDENTICAL_ENDPOINTS`
-- `Expected Webhook Sequence`: отсутствует
-- `Expected Final Job State`: новый `Job` не создаётся
-- `Required Platform Facts`: отсутствуют
-- `Negative Assertions`: нет `JobAccepted`
-- `Automation Target`: `contract-only`
+- `Категория`:  `валидация`
+- `Фикстура`:  оба `endpointId` валидны
+- `Предусловия`:  `sourceEndpointId == targetEndpointId`
+- `Стимул`:  `POST /api/v0/payload-transfer-jobs`
+- `Ожидаемый синхронный ответ`:  `422 Unprocessable Entity`, `Problem.code = IDENTICAL_ENDPOINTS`
+- `Ожидаемая последовательность вебхуков`:  отсутствует
+- `Ожидаемое итоговое состояние задания`:  новый `Job` не создаётся
+- `Обязательные платформенные факты`:  отсутствуют
+- `Негативные утверждения`:  нет `JobAccepted`
+- `Целевой уровень автоматизации`:  `контракт`
 
-### `NB-VAL-004` No admissible route between valid endpoints
+### `NB-VAL-004` Нет допустимого маршрута между валидными конечными точками
 
-- `Category`: `validation`
-- `Fixture`: `F-02 NoRouteBetweenValidEndpoints`
-- `Preconditions`: оба `endpointId` валидны, но маршрут отсутствует
-- `Stimulus`: `POST /api/v0/payload-transfer-jobs`
-- `Expected Sync Response`: `422 Unprocessable Entity`, `Problem.code = NO_ADMISSIBLE_ROUTE`
-- `Expected Webhook Sequence`: отсутствует
-- `Expected Final Job State`: новый `Job` не создаётся
-- `Required Platform Facts`: отсутствуют
-- `Negative Assertions`: нет `JobAccepted`
-- `Automation Target`: `contract-only`
+- `Категория`:  `валидация`
+- `Фикстура`:  `F-02` Нет маршрута между валидными конечными точками
+- `Предусловия`:  оба `endpointId` валидны, но маршрут отсутствует
+- `Стимул`:  `POST /api/v0/payload-transfer-jobs`
+- `Ожидаемый синхронный ответ`:  `422 Unprocessable Entity`, `Problem.code = NO_ADMISSIBLE_ROUTE`
+- `Ожидаемая последовательность вебхуков`:  отсутствует
+- `Ожидаемое итоговое состояние задания`:  новый `Job` не создаётся
+- `Обязательные платформенные факты`:  отсутствуют
+- `Негативные утверждения`:  нет `JobAccepted`
+- `Целевой уровень автоматизации`:  `контракт`
 
-### `NB-READ-001` Get existing job by `jobId`
+### `NB-READ-001` Получение существующего задания по `jobId`
 
-- `Category`: `read-model`
-- `Fixture`: любой ранее созданный `Job`
-- `Preconditions`: `jobId` существует
-- `Stimulus`: `GET /api/v0/payload-transfer-jobs/{jobId}`
-- `Expected Sync Response`: `200 OK`, тело соответствует текущей внешней проекции
-- `Expected Webhook Sequence`: отсутствует
-- `Expected Final Job State`: без изменений
-- `Required Platform Facts`: отсутствуют
-- `Negative Assertions`: `GET` не изменяет состояние `Job`
-- `Automation Target`: `contract+projection`
+- `Категория`: `чтение проекции`
+- `Фикстура`:  любой ранее созданный `Job`
+- `Предусловия`:  `jobId` существует
+- `Стимул`:  `GET /api/v0/payload-transfer-jobs/{jobId}`
+- `Ожидаемый синхронный ответ`:  `200 OK`, тело соответствует текущей внешней проекции
+- `Ожидаемая последовательность вебхуков`:  отсутствует
+- `Ожидаемое итоговое состояние задания`:  без изменений
+- `Обязательные платформенные факты`:  отсутствуют
+- `Негативные утверждения`:  `GET` не изменяет состояние `Job`
+- `Целевой уровень автоматизации`:  `контракт+проекция`
 
-### `NB-READ-002` Get existing job by `clientOrderId`
+### `NB-READ-002` Получение существующего задания по `clientOrderId`
 
-- `Category`: `read-model`
-- `Fixture`: любой ранее созданный `Job`
-- `Preconditions`: `clientOrderId` существует
-- `Stimulus`: `GET /api/v0/payload-transfer-jobs/by-client-order/{clientOrderId}`
-- `Expected Sync Response`: `200 OK`, тело соответствует текущей внешней проекции
-- `Expected Webhook Sequence`: отсутствует
-- `Expected Final Job State`: без изменений
-- `Required Platform Facts`: отсутствуют
-- `Negative Assertions`: `GET` не изменяет состояние `Job`
-- `Automation Target`: `contract+projection`
+- `Категория`: `чтение проекции`
+- `Фикстура`:  любой ранее созданный `Job`
+- `Предусловия`:  `clientOrderId` существует
+- `Стимул`:  `GET /api/v0/payload-transfer-jobs/by-client-order/{clientOrderId}`
+- `Ожидаемый синхронный ответ`:  `200 OK`, тело соответствует текущей внешней проекции
+- `Ожидаемая последовательность вебхуков`:  отсутствует
+- `Ожидаемое итоговое состояние задания`:  без изменений
+- `Обязательные платформенные факты`:  отсутствуют
+- `Негативные утверждения`:  `GET` не изменяет состояние `Job`
+- `Целевой уровень автоматизации`:  `контракт+проекция`
 
-### `NB-READ-003` Get missing job by `jobId`
+### `NB-READ-003` Получение отсутствующего задания по `jobId`
 
-- `Category`: `read-model`
-- `Fixture`: отсутствует
-- `Preconditions`: `jobId` не существует
-- `Stimulus`: `GET /api/v0/payload-transfer-jobs/{jobId}`
-- `Expected Sync Response`: `404 Not Found`, `Problem.code = JOB_NOT_FOUND`
-- `Expected Webhook Sequence`: отсутствует
-- `Expected Final Job State`: ресурс отсутствует
-- `Required Platform Facts`: отсутствуют
-- `Negative Assertions`: не возникает новый `Job`
-- `Automation Target`: `contract-only`
+- `Категория`: `чтение проекции`
+- `Фикстура`:  отсутствует
+- `Предусловия`:  `jobId` не существует
+- `Стимул`:  `GET /api/v0/payload-transfer-jobs/{jobId}`
+- `Ожидаемый синхронный ответ`:  `404 Not Found`, `Problem.code = JOB_NOT_FOUND`
+- `Ожидаемая последовательность вебхуков`:  отсутствует
+- `Ожидаемое итоговое состояние задания`:  ресурс отсутствует
+- `Обязательные платформенные факты`:  отсутствуют
+- `Негативные утверждения`:  не возникает новый `Job`
+- `Целевой уровень автоматизации`:  `контракт`
 
-### `NB-LIFE-001` Accepted job completes successfully
+### `NB-LIFE-001` Принятое задание успешно завершается
 
-- `Category`: `lifecycle`
-- `Fixture`: `F-01 NominalRoute` и `F-06 ExistingAcceptedJob`
-- `Preconditions`: существует принятое задание в состоянии `ACCEPTED`
-- `Stimulus`: выполнение задания в симуляторе до достижения целевой точки
-- `Expected Sync Response`: не применяется, задание уже принято
-- `Expected Webhook Sequence`: `job.state_changed(IN_PROGRESS)` -> `job.state_changed(COMPLETED)`
-- `Expected Final Job State`: `COMPLETED`
-- `Required Platform Facts`: `JobStateChanged(IN_PROGRESS)`, `JobStateChanged(COMPLETED)`, финальный `PayloadCustodyChanged`, согласованный с `targetEndpointId`
-- `Negative Assertions`: нет `FAILED`, нет `CANCELLED`, нет второго `job.accepted`
-- `Automation Target`: `contract+simulation`
+- `Категория`: `жизненный цикл`
+- `Фикстура`:  `F-01` Номинальный маршрут и `F-06` Существующее принятое задание
+- `Предусловия`:  существует принятое задание в состоянии `ACCEPTED`
+- `Стимул`:  выполнение задания в симуляторе до достижения целевой точки
+- `Ожидаемый синхронный ответ`:  не применяется, задание уже принято
+- `Ожидаемая последовательность вебхуков`:  `job.state_changed(IN_PROGRESS)` -> `job.state_changed(COMPLETED)`
+- `Ожидаемое итоговое состояние задания`:  `COMPLETED`
+- `Обязательные платформенные факты`:  `JobStateChanged(IN_PROGRESS)`, `JobStateChanged(COMPLETED)`, финальный `PayloadCustodyChanged`, согласованный с `targetEndpointId`
+- `Негативные утверждения`:  нет `FAILED`, нет `CANCELLED`, нет второго `job.accepted`
+- `Целевой уровень автоматизации`:  `контракт+симуляция`
 
-### `NB-LIFE-002` Accepted job is suspended by runtime station blockage
+### `NB-LIFE-002` Принятое задание приостанавливается из-за блокировки станции во время исполнения
 
-- `Category`: `lifecycle`
-- `Fixture`: `F-03 RuntimeStationBlocked` и `F-06 ExistingAcceptedJob`
-- `Preconditions`: задание принято и может начать исполнение
-- `Stimulus`: во время исполнения граница станции переходит в `BLOCKED` или `OFFLINE`
-- `Expected Sync Response`: не применяется, задание уже принято
-- `Expected Webhook Sequence`: `job.state_changed(IN_PROGRESS)` -> `job.state_changed(SUSPENDED)`
-- `Expected Final Job State`: `SUSPENDED`
-- `Required Platform Facts`: `JobStateChanged(IN_PROGRESS)`, `StationReadinessChanged`, `JobStateChanged(SUSPENDED)`
-- `Negative Assertions`: нет `COMPLETED`, нет финального `PayloadCustodyChanged` к целевой конечной точке
-- `Automation Target`: `contract+simulation`
+- `Категория`: `жизненный цикл`
+- `Фикстура`:  `F-03` Станция блокируется во время исполнения и `F-06` Существующее принятое задание
+- `Предусловия`:  задание принято и может начать исполнение
+- `Стимул`:  во время исполнения граница станции переходит в `BLOCKED` или `OFFLINE`
+- `Ожидаемый синхронный ответ`:  не применяется, задание уже принято
+- `Ожидаемая последовательность вебхуков`:  `job.state_changed(IN_PROGRESS)` -> `job.state_changed(SUSPENDED)`
+- `Ожидаемое итоговое состояние задания`:  `SUSPENDED`
+- `Обязательные платформенные факты`:  `JobStateChanged(IN_PROGRESS)`, `StationReadinessChanged`, `JobStateChanged(SUSPENDED)`
+- `Негативные утверждения`:  нет `COMPLETED`, нет финального `PayloadCustodyChanged` к целевой конечной точке
+- `Целевой уровень автоматизации`:  `контракт+симуляция`
 
-### `NB-LIFE-003` Accepted job fails on unrecoverable execution error
+### `NB-LIFE-003` Принятое задание завершается ошибкой из-за нерешаемого сбоя исполнения
 
-- `Category`: `lifecycle`
-- `Fixture`: `F-04 UnrecoverableExecutionError` и `F-06 ExistingAcceptedJob`
-- `Preconditions`: задание принято и начало исполнение
-- `Stimulus`: нижний контур возвращает нерешаемую ошибку исполнения
-- `Expected Sync Response`: не применяется, задание уже принято
-- `Expected Webhook Sequence`: `job.state_changed(IN_PROGRESS)` -> `job.state_changed(FAILED)`
-- `Expected Final Job State`: `FAILED`
-- `Required Platform Facts`: `JobStateChanged(IN_PROGRESS)`, `ExecutionRejected` или эквивалентный нерешаемый отказ, `JobStateChanged(FAILED)`
-- `Negative Assertions`: нет `COMPLETED`, нет `CANCELLED`
-- `Automation Target`: `contract+simulation`
+- `Категория`: `жизненный цикл`
+- `Фикстура`:  `F-04` Нерешаемая ошибка исполнения и `F-06` Существующее принятое задание
+- `Предусловия`:  задание принято и начало исполнение
+- `Стимул`:  нижний контур возвращает нерешаемую ошибку исполнения
+- `Ожидаемый синхронный ответ`:  не применяется, задание уже принято
+- `Ожидаемая последовательность вебхуков`:  `job.state_changed(IN_PROGRESS)` -> `job.state_changed(FAILED)`
+- `Ожидаемое итоговое состояние задания`:  `FAILED`
+- `Обязательные платформенные факты`:  `JobStateChanged(IN_PROGRESS)`, `ExecutionRejected` или эквивалентный нерешаемый отказ, `JobStateChanged(FAILED)`
+- `Негативные утверждения`:  нет `COMPLETED`, нет `CANCELLED`
+- `Целевой уровень автоматизации`:  `контракт+симуляция`
 
-### `NB-CANCEL-001` Cancel active job
+### `NB-CANCEL-001` Отмена активного задания
 
-- `Category`: `cancellation`
-- `Fixture`: `F-07 ExistingInProgressJob`
-- `Preconditions`: существует нетерминальное задание
-- `Stimulus`: `POST /api/v0/payload-transfer-jobs/{jobId}/cancel`
-- `Expected Sync Response`: `202 Accepted`
-- `Expected Webhook Sequence`: один `job.state_changed(CANCELLED)`
-- `Expected Final Job State`: `CANCELLED`
-- `Required Platform Facts`: `JobStateChanged(CANCELLED)`
-- `Negative Assertions`: после отмены не публикуются `COMPLETED` или `FAILED` для того же `jobId`
-- `Automation Target`: `contract+simulation`
+- `Категория`: `отмена`
+- `Фикстура`:  `F-07` Существующее задание в исполнении
+- `Предусловия`:  существует нетерминальное задание
+- `Стимул`:  `POST /api/v0/payload-transfer-jobs/{jobId}/cancel`
+- `Ожидаемый синхронный ответ`:  `202 Accepted`
+- `Ожидаемая последовательность вебхуков`:  один `job.state_changed(CANCELLED)`
+- `Ожидаемое итоговое состояние задания`:  `CANCELLED`
+- `Обязательные платформенные факты`:  `JobStateChanged(CANCELLED)`
+- `Негативные утверждения`:  после отмены не публикуются `COMPLETED` или `FAILED` для того же `jobId`
+- `Целевой уровень автоматизации`:  `контракт+симуляция`
 
-### `NB-CANCEL-002` Cancel already cancelled job
+### `NB-CANCEL-002` Отмена уже отменённого задания
 
-- `Category`: `cancellation`
-- `Fixture`: `F-08 ExistingCancelledJob`
-- `Preconditions`: задание уже находится в `CANCELLED`
-- `Stimulus`: `POST /api/v0/payload-transfer-jobs/{jobId}/cancel`
-- `Expected Sync Response`: `200 OK`, тело отражает состояние `CANCELLED`
-- `Expected Webhook Sequence`: отсутствует
-- `Expected Final Job State`: `CANCELLED`
-- `Required Platform Facts`: новые `JobStateChanged` отсутствуют
-- `Negative Assertions`: не публикуется второй terminal transition
-- `Automation Target`: `contract+projection`
+- `Категория`: `отмена`
+- `Фикстура`:  `F-08` Существующее отменённое задание
+- `Предусловия`:  задание уже находится в `CANCELLED`
+- `Стимул`:  `POST /api/v0/payload-transfer-jobs/{jobId}/cancel`
+- `Ожидаемый синхронный ответ`:  `200 OK`, тело отражает состояние `CANCELLED`
+- `Ожидаемая последовательность вебхуков`:  отсутствует
+- `Ожидаемое итоговое состояние задания`:  `CANCELLED`
+- `Обязательные платформенные факты`:  новые `JobStateChanged` отсутствуют
+- `Негативные утверждения`:  второй терминальный переход состояния не публикуется
+- `Целевой уровень автоматизации`:  `контракт+проекция`
 
-### `NB-CANCEL-003` Cancel completed job is rejected
+### `NB-CANCEL-003` Отклонение отмены завершённого задания
 
-- `Category`: `cancellation`
-- `Fixture`: `F-09 ExistingCompletedJob`
-- `Preconditions`: задание уже находится в `COMPLETED`
-- `Stimulus`: `POST /api/v0/payload-transfer-jobs/{jobId}/cancel`
-- `Expected Sync Response`: `409 Conflict`, `Problem.code = CANCEL_NOT_ALLOWED`
-- `Expected Webhook Sequence`: отсутствует
-- `Expected Final Job State`: `COMPLETED`
-- `Required Platform Facts`: новые `JobStateChanged` отсутствуют
-- `Negative Assertions`: состояние задания не меняется
-- `Automation Target`: `contract-only`
+- `Категория`: `отмена`
+- `Фикстура`:  `F-09` Существующее завершённое задание
+- `Предусловия`:  задание уже находится в `COMPLETED`
+- `Стимул`:  `POST /api/v0/payload-transfer-jobs/{jobId}/cancel`
+- `Ожидаемый синхронный ответ`:  `409 Conflict`, `Problem.code = CANCEL_NOT_ALLOWED`
+- `Ожидаемая последовательность вебхуков`:  отсутствует
+- `Ожидаемое итоговое состояние задания`:  `COMPLETED`
+- `Обязательные платформенные факты`:  новые `JobStateChanged` отсутствуют
+- `Негативные утверждения`:  состояние задания не меняется
+- `Целевой уровень автоматизации`:  `контракт`
 
-### `NB-REC-001` Session loss during execution leads to suspension
+### `NB-REC-001` Потеря сеанса во время исполнения приводит к приостановке
 
-- `Category`: `recovery`
-- `Fixture`: `F-05 DeviceSessionLoss` и `F-07 ExistingInProgressJob`
-- `Preconditions`: задание уже находится в `IN_PROGRESS`
-- `Stimulus`: потеря `DeviceSession` активного устройства во время исполнения
-- `Expected Sync Response`: не применяется, задание уже принято
-- `Expected Webhook Sequence`: один `job.state_changed(SUSPENDED)`
-- `Expected Final Job State`: `SUSPENDED`
-- `Required Platform Facts`: `DeviceSessionLost`, `JobStateChanged(SUSPENDED)`
-- `Negative Assertions`: нет `COMPLETED`, нет автоматического возврата в `IN_PROGRESS` без отдельного восстановления
-- `Automation Target`: `contract+simulation`
+- `Категория`: `восстановление`
+- `Фикстура`:  `F-05` Потеря сеанса устройства и `F-07` Существующее задание в исполнении
+- `Предусловия`:  задание уже находится в `IN_PROGRESS`
+- `Стимул`:  потеря `DeviceSession` активного устройства во время исполнения
+- `Ожидаемый синхронный ответ`:  не применяется, задание уже принято
+- `Ожидаемая последовательность вебхуков`:  один `job.state_changed(SUSPENDED)`
+- `Ожидаемое итоговое состояние задания`:  `SUSPENDED`
+- `Обязательные платформенные факты`:  `DeviceSessionLost`, `JobStateChanged(SUSPENDED)`
+- `Негативные утверждения`:  нет `COMPLETED`, нет автоматического возврата в `IN_PROGRESS` без отдельного восстановления
+- `Целевой уровень автоматизации`:  `контракт+симуляция`
 
 ---
 
 ## 7. Что сознательно отложено
 
-- сценарии для batch-операций;
-- сценарии security и transport-profile;
-- сценарии operator/admin API;
-- детальная матрица retry/compensation для каждого внутреннего `ExecutionTask`;
-- точные SLA и тайминги webhook-доставки;
-- сценарии multi-tenant и динамической регистрации webhook.
+- сценарии для пакетных операций;
+- сценарии безопасности и транспортного профиля;
+- сценарии интерфейса операторского и административного управления;
+- детальная матрица повторных попыток и компенсаций для каждого внутреннего `ExecutionTask`;
+- точные SLA и тайминги доставки вебхуков;
+- сценарии многоклиентности и динамической регистрации вебхуков.

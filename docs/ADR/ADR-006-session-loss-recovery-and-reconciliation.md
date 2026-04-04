@@ -58,7 +58,7 @@
 - `activeCommand?`;
 - `activeCapabilities`;
 - `faultState`;
-- семейственно-специфические поля состояния, включая `movementMode`, `carrierId`, `occupiedShuttleId`, если они применимы.
+- поля состояния, характерные для конкретного семейства ресурсов, включая `movementMode`, `carrierId`, `occupiedShuttleId`, если они применимы.
 
 ### 2.4. Допустимые исходы повторного согласования
 

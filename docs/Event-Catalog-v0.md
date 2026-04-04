@@ -11,11 +11,11 @@
 
 Документ фиксирует минимальный нормативный каталог канонических событий платформы, достаточный для:
 
-- согласованной реализации `WES`, `WCS`, `Digital Twin` и проекций операций;
-- построения `Northbound API` как проекции поверх уже зафиксированных фактов;
+- согласованной реализации `WES`, `WCS`, цифрового двойника (`Digital Twin`) и проекций операций;
+- построения верхнего интеграционного интерфейса (`Northbound API`) как проекции поверх уже зафиксированных фактов;
 - исключения ситуации, когда одна и та же бизнес-ситуация публикуется разными событиями в разных частях системы.
 
-Документ описывает **канонические платформенные события**, а не сырую телеметрию и не wire-сообщения конкретного адаптера.
+Документ описывает **канонические платформенные события**, а не сырую телеметрию и не низкоуровневые сообщения конкретного адаптера.
 
 ---
 
@@ -31,11 +31,11 @@
 
 Каталог не включает:
 
-- сырую телеметрию `Telemetry Firehose`;
-- вендорные wire-сообщения;
-- команды southbound-контракта;
+- сырую телеметрию устройств;
+- низкоуровневые сообщения конкретного вендора;
+- команды нижнего интеграционного интерфейса;
 - `Heartbeat` и `StateSnapshot` как транспортные сообщения нижнего контура;
-- debug- и trace-события реализации.
+- отладочные и трассировочные события реализации.
 
 ---
 
@@ -62,9 +62,9 @@ payload
 
 - `internal` — событие используется только внутри платформы.
 - `operations` — событие допустимо для операторских проекций, журналов и `Digital Twin`.
-- `northbound` — событие может публиковаться внешним системам через `Northbound API`.
+- `northbound` — событие может публиковаться внешним системам через верхний интеграционный интерфейс (`Northbound API`).
 
-Если событие имеет `visibility = northbound`, это не означает автоматическую публикацию всего payload наружу; внешняя проекция может быть уже и стабильнее внутренней.
+Если событие имеет `visibility = northbound`, это не означает автоматическую публикацию всей полезной нагрузки наружу; внешняя проекция может быть уже и стабильнее внутренней.
 
 ### 3.3. Порядок и идемпотентность
 
@@ -73,18 +73,18 @@ payload
 - повторная публикация того же факта не должна менять итоговую проекцию;
 - там, где это применимо, используется дополнительный семантический ключ идемпотентности, описанный в карточке события.
 
-### 3.4. Владелец и producer
+### 3.4. Владелец факта и публикатор
 
-- `owner` — логический владелец факта и его бизнес-семантики;
-- `producer` — компонент, который физически публикует событие на шину.
+- `владелец факта` — логический владелец факта и его бизнес-семантики;
+- `публикатор` — компонент, который физически публикует событие на шину.
 
-Во многих случаях `owner` и `producer` совпадают, но для нормализованных сигналов от адаптеров это не обязательно.
+Во многих случаях `владелец факта` и `публикатор` совпадают, но для нормализованных сигналов от адаптеров это не обязательно.
 
 ---
 
 ## 4. Сводная таблица
 
-| Event | Visibility | Owner | Producer | Ключ порядка |
+| Событие | Видимость | Владелец факта | Публикатор | Ключ порядка |
 |---|---|---|---|---|
 | `JobAccepted` | `operations`, `northbound` | `WES` | `WES` | `jobId` |
 | `JobStateChanged` | `operations`, `northbound` | `WES` | `WES` | `jobId` |
@@ -110,14 +110,14 @@ payload
 ### 5.1. `JobAccepted`
 
 - `visibility`: `operations`, `northbound`
-- `owner`: `WES`
-- `producer`: `WES`
-- `consumers`: `Digital Twin`, операторские проекции, northbound-доставка
-- `trigger`: `WES` принял входящий запрос и создал `Job`
-- `postcondition`: `Job` существует и доступен для дальнейшего отслеживания
-- `correlation`: `correlationId = jobId`
-- `idempotency`: повторная публикация с тем же `jobId` не должна создавать второй `Job`
-- `payload`:
+- `владелец факта`: `WES`
+- `публикатор`: `WES`
+- `потребители`: `Digital Twin`, операторские проекции, внешняя доставка через верхний интеграционный интерфейс
+- `триггер`: `WES` принял входящий запрос и создал `Job`
+- `постусловие`: `Job` существует и доступен для дальнейшего отслеживания
+- `корреляция`: `correlationId = jobId`
+- `идемпотентность`: повторная публикация с тем же `jobId` не должна создавать второй `Job`
+- `состав полезной нагрузки`:
 
 ```text
 {
@@ -134,14 +134,14 @@ payload
 ### 5.2. `JobStateChanged`
 
 - `visibility`: `operations`, `northbound`
-- `owner`: `WES`
-- `producer`: `WES`
-- `consumers`: `Digital Twin`, northbound-доставка, операторские проекции
-- `trigger`: подтверждённый переход состояния `Job`
-- `postcondition`: состояние `Job` обновлено в модели `WES`
-- `correlation`: `correlationId = jobId`
-- `idempotency`: дубликат одного и того же перехода не меняет проекцию
-- `payload`:
+- `владелец факта`: `WES`
+- `публикатор`: `WES`
+- `потребители`: `Digital Twin`, внешняя доставка через верхний интеграционный интерфейс, операторские проекции
+- `триггер`: подтверждённый переход состояния `Job`
+- `постусловие`: состояние `Job` обновлено в модели `WES`
+- `корреляция`: `correlationId = jobId`
+- `идемпотентность`: дубликат одного и того же перехода не меняет проекцию
+- `состав полезной нагрузки`:
 
 ```text
 {
@@ -156,14 +156,14 @@ payload
 ### 5.3. `ExecutionTaskStateChanged`
 
 - `visibility`: `internal`, `operations`
-- `owner`: `WCS`
-- `producer`: `WCS`
-- `consumers`: `WES`, `Digital Twin`, операторские проекции, локальные проекции состояния
-- `trigger`: подтверждённый переход состояния `ExecutionTask`
-- `postcondition`: текущее состояние шага синхронизировано в операционной модели
-- `correlation`: `correlationId = executionTask.correlationId`
-- `idempotency`: дубликат одного и того же перехода по `executionTaskId + newState` не меняет проекцию
-- `payload`:
+- `владелец факта`: `WCS`
+- `публикатор`: `WCS`
+- `потребители`: `WES`, `Digital Twin`, операторские проекции, локальные проекции состояния
+- `триггер`: подтверждённый переход состояния `ExecutionTask`
+- `постусловие`: текущее состояние шага синхронизировано в операционной модели
+- `корреляция`: `correlationId = executionTask.correlationId`
+- `идемпотентность`: дубликат одного и того же перехода по `executionTaskId + newState` не меняет проекцию
+- `состав полезной нагрузки`:
 
 ```text
 {
@@ -185,14 +185,14 @@ payload
 ### 5.4. `PayloadCustodyChanged`
 
 - `visibility`: `internal`, `operations`
-- `owner`: `WCS`
-- `producer`: `WCS`
-- `consumers`: `Digital Twin`, аудит исполнения, проекция состояния груза
-- `trigger`: подтверждённый факт передачи или загрузки/выгрузки
-- `postcondition`: у `Payload` обновлён текущий физический держатель
-- `correlation`: `correlationId = executionTask.correlationId`
-- `idempotency`: повторная публикация того же перехода `from -> to` не должна дублировать смену holder
-- `payload`:
+- `владелец факта`: `WCS`
+- `публикатор`: `WCS`
+- `потребители`: `Digital Twin`, аудит исполнения, проекция состояния груза
+- `триггер`: подтверждённый факт передачи или загрузки/выгрузки
+- `постусловие`: у `Payload` обновлён текущий физический держатель
+- `корреляция`: `correlationId = executionTask.correlationId`
+- `идемпотентность`: повторная публикация того же перехода `from -> to` не должна дублировать смену holder
+- `состав полезной нагрузки`:
 
 ```text
 {
@@ -207,14 +207,14 @@ payload
 ### 5.5. `TransferCommitted`
 
 - `visibility`: `internal`, `operations`
-- `owner`: `WCS`
-- `producer`: `WCS`
-- `consumers`: `Digital Twin`, аудит, проекция операций передачи
-- `trigger`: конечный автомат передачи достиг подтверждённого commit
-- `postcondition`: операция передачи завершена успешно
-- `correlation`: `correlationId = executionTask.correlationId`
-- `idempotency`: один `correlationId` должен иметь не более одного итогового commit
-- `payload`:
+- `владелец факта`: `WCS`
+- `публикатор`: `WCS`
+- `потребители`: `Digital Twin`, аудит, проекция операций передачи
+- `триггер`: конечный автомат передачи перешёл в подтверждённое состояние успешного завершения
+- `постусловие`: операция передачи завершена успешно
+- `корреляция`: `correlationId = executionTask.correlationId`
+- `идемпотентность`: для одного `correlationId` допускается не более одного итогового успешного завершения
+- `состав полезной нагрузки`:
 
 ```text
 {
@@ -228,14 +228,14 @@ payload
 ### 5.6. `TransferAborted`
 
 - `visibility`: `internal`, `operations`
-- `owner`: `WCS`
-- `producer`: `WCS`
-- `consumers`: `Digital Twin`, аудит, операторская консоль
-- `trigger`: конечный автомат передачи достиг подтверждённого abort
-- `postcondition`: операция передачи зафиксирована как незавершённая и безопасно остановленная
-- `correlation`: `correlationId = executionTask.correlationId`
-- `idempotency`: один `correlationId` должен иметь не более одного итогового abort
-- `payload`:
+- `владелец факта`: `WCS`
+- `публикатор`: `WCS`
+- `потребители`: `Digital Twin`, аудит, операторская консоль
+- `триггер`: конечный автомат передачи перешёл в подтверждённое состояние прерывания
+- `постусловие`: операция передачи зафиксирована как незавершённая и безопасно остановленная
+- `корреляция`: `correlationId = executionTask.correlationId`
+- `идемпотентность`: для одного `correlationId` допускается не более одного итогового прерывания
+- `состав полезной нагрузки`:
 
 ```text
 {
@@ -249,14 +249,14 @@ payload
 ### 5.7. `NodeReached`
 
 - `visibility`: `internal`
-- `owner`: `WCS`
-- `producer`: `WCS`
-- `consumers`: конечный автомат материализации, логика восстановления, `Digital Twin`
-- `trigger`: подтверждённый факт достижения логического узла устройством
-- `postcondition`: `currentNode` устройства обновлён
-- `correlation`: `correlationId = active execution correlation`
-- `idempotency`: дубликат того же достижения узла в рамках того же активного шага не меняет итоговую проекцию
-- `payload`:
+- `владелец факта`: `WCS`
+- `публикатор`: `WCS`
+- `потребители`: конечный автомат материализации, логика восстановления, `Digital Twin`
+- `триггер`: подтверждённый факт достижения логического узла устройством
+- `постусловие`: `currentNode` устройства обновлён
+- `корреляция`: `correlationId = active execution correlation`
+- `идемпотентность`: дубликат того же достижения узла в рамках того же активного шага не меняет итоговую проекцию
+- `состав полезной нагрузки`:
 
 ```text
 {
@@ -269,14 +269,14 @@ payload
 ### 5.8. `TransferReady`
 
 - `visibility`: `internal`
-- `owner`: `WCS`
-- `producer`: `WCS`
-- `consumers`: transfer FSM, recovery logic
-- `trigger`: участник операции передачи подтвердил локальную готовность
-- `postcondition`: соответствующая runtime-phase может перейти к следующей проверке
-- `correlation`: `correlationId = executionTask.correlationId`
-- `idempotency`: повторная готовность по тому же `transferPointId + role + correlationId` не меняет FSM
-- `payload`:
+- `владелец факта`: `WCS`
+- `публикатор`: `WCS`
+- `потребители`: конечный автомат передачи, логика восстановления
+- `триггер`: участник операции передачи подтвердил локальную готовность
+- `постусловие`: соответствующая внутренняя фаза исполнения может перейти к следующей проверке
+- `корреляция`: `correlationId = executionTask.correlationId`
+- `идемпотентность`: повторная готовность по тому же `transferPointId + role + correlationId` не меняет FSM
+- `состав полезной нагрузки`:
 
 ```text
 {
@@ -289,14 +289,14 @@ payload
 ### 5.9. `DeviceSessionLost`
 
 - `visibility`: `internal`, `operations`
-- `owner`: `WCS`
-- `producer`: `WCS`
-- `consumers`: логика восстановления, операторская консоль, `Digital Twin`
-- `trigger`: истёк lease или зафиксирована потеря управляемого сеанса
-- `postcondition`: ресурс выведен из нормального контура исполнения, связанный шаг приостановлен
-- `correlation`: `correlationId = active execution correlation`, если шаг активен
-- `idempotency`: повтор по тому же `deviceId + sessionId` не меняет состояние после первого suspend
-- `payload`:
+- `владелец факта`: `WCS`
+- `публикатор`: `WCS`
+- `потребители`: логика восстановления, операторская консоль, `Digital Twin`
+- `триггер`: истёк lease или зафиксирована потеря управляемого сеанса
+- `постусловие`: ресурс выведен из нормального контура исполнения, связанный шаг приостановлен
+- `корреляция`: `correlationId = active execution correlation`, если шаг активен
+- `идемпотентность`: повтор по тому же `deviceId + sessionId` не меняет состояние после первого suspend
+- `состав полезной нагрузки`:
 
 ```text
 {
@@ -310,14 +310,14 @@ payload
 ### 5.10. `CapabilityChanged`
 
 - `visibility`: `internal`, `operations`
-- `owner`: `WCS`
-- `producer`: `WCS`
-- `consumers`: планировочные проекции, операторская консоль, `Digital Twin`
-- `trigger`: изменилась активная применимость возможностей ресурса
-- `postcondition`: `activeCapabilities` обновлены в проекции устройства
-- `correlation`: `correlationId = deviceId`
-- `idempotency`: для `deviceId` действует правило "последнее состояние побеждает"
-- `payload`:
+- `владелец факта`: `WCS`
+- `публикатор`: `WCS`
+- `потребители`: планировочные проекции, операторская консоль, `Digital Twin`
+- `триггер`: изменилась активная применимость возможностей ресурса
+- `постусловие`: `activeCapabilities` обновлены в проекции устройства
+- `корреляция`: `correlationId = deviceId`
+- `идемпотентность`: для `deviceId` действует правило "последнее состояние побеждает"
+- `состав полезной нагрузки`:
 
 ```text
 {
@@ -330,14 +330,14 @@ payload
 ### 5.11. `FaultRaised`
 
 - `visibility`: `internal`, `operations`
-- `owner`: `WCS`
-- `producer`: `WCS`
-- `consumers`: логика карантина, операторская консоль, `Digital Twin`
-- `trigger`: подтверждён новый активный отказ
-- `postcondition`: отказ зафиксирован в операционной модели
-- `correlation`: `correlationId = sourceId`
-- `idempotency`: повтор по `sourceId + faultCode + ACTIVE` не должен дублировать fault
-- `payload`:
+- `владелец факта`: `WCS`
+- `публикатор`: `WCS`
+- `потребители`: логика карантина, операторская консоль, `Digital Twin`
+- `триггер`: подтверждён новый активный отказ
+- `постусловие`: отказ зафиксирован в операционной модели
+- `корреляция`: `correlationId = sourceId`
+- `идемпотентность`: повтор по `sourceId + faultCode + ACTIVE` не должен дублировать fault
+- `состав полезной нагрузки`:
 
 ```text
 {
@@ -351,14 +351,14 @@ payload
 ### 5.12. `FaultCleared`
 
 - `visibility`: `internal`, `operations`
-- `owner`: `WCS`
-- `producer`: `WCS`
-- `consumers`: логика карантина, операторская консоль, `Digital Twin`
-- `trigger`: ранее активный отказ подтверждённо снят
-- `postcondition`: fault переходит в cleared-state
-- `correlation`: `correlationId = sourceId`
-- `idempotency`: повтор по `sourceId + faultCode + CLEARED` не меняет модель
-- `payload`:
+- `владелец факта`: `WCS`
+- `публикатор`: `WCS`
+- `потребители`: логика карантина, операторская консоль, `Digital Twin`
+- `триггер`: подтверждено, что ранее активный отказ снят
+- `постусловие`: состояние отказа меняется на `CLEARED`
+- `корреляция`: `correlationId = sourceId`
+- `идемпотентность`: повтор по `sourceId + faultCode + CLEARED` не меняет модель
+- `состав полезной нагрузки`:
 
 ```text
 {
@@ -371,14 +371,14 @@ payload
 ### 5.13. `VerticalCarrierPositionChanged`
 
 - `visibility`: `internal`, `operations`
-- `owner`: `WCS`
-- `producer`: `WCS`
-- `consumers`: `Digital Twin`, transfer FSM, recovery logic
-- `trigger`: лифт подтверждённо достиг нового `CarrierNode`
-- `postcondition`: положение `VerticalCarrier` и зависимых shuttle-passenger проекций обновлено
-- `correlation`: `correlationId = active execution correlation`
-- `idempotency`: повтор того же `carrierNode` подряд не меняет проекцию
-- `payload`:
+- `владелец факта`: `WCS`
+- `публикатор`: `WCS`
+- `потребители`: `Digital Twin`, конечный автомат передачи, логика восстановления
+- `триггер`: подтверждено, что лифт достиг нового `CarrierNode`
+- `постусловие`: положение `VerticalCarrier` и зависимых проекций шаттла-пассажира обновлено
+- `корреляция`: `correlationId = active execution correlation`
+- `идемпотентность`: повтор того же `carrierNode` подряд не меняет проекцию
+- `состав полезной нагрузки`:
 
 ```text
 {
@@ -391,14 +391,14 @@ payload
 ### 5.14. `ShuttleMovementModeChanged`
 
 - `visibility`: `internal`, `operations`
-- `owner`: `WCS`
-- `producer`: `WCS`
-- `consumers`: `Digital Twin`, логика восстановления, операторская консоль
-- `trigger`: шаттл перешёл между `AUTONOMOUS` и `CARRIER_PASSENGER`
-- `postcondition`: обновлены `movementMode` и связанный `carrierId`
-- `correlation`: `correlationId = executionTask.correlationId`
-- `idempotency`: дубликат того же перехода `previousMode -> newMode` не меняет модель
-- `payload`:
+- `владелец факта`: `WCS`
+- `публикатор`: `WCS`
+- `потребители`: `Digital Twin`, логика восстановления, операторская консоль
+- `триггер`: шаттл перешёл между `AUTONOMOUS` и `CARRIER_PASSENGER`
+- `постусловие`: обновлены `movementMode` и связанный `carrierId`
+- `корреляция`: `correlationId = executionTask.correlationId`
+- `идемпотентность`: дубликат того же перехода `previousMode -> newMode` не меняет модель
+- `состав полезной нагрузки`:
 
 ```text
 {
@@ -412,14 +412,14 @@ payload
 ### 5.15. `StationReadinessChanged`
 
 - `visibility`: `internal`, `operations`
-- `owner`: `WCS`
-- `producer`: `Station/Site Integration Adapter`
-- `consumers`: логика передачи `WCS`, операторская консоль, `Digital Twin`
-- `trigger`: адаптер получил новый подтверждённый факт о готовности пассивной станции
-- `postcondition`: `StationBoundary.readiness` обновлена
-- `correlation`: `correlationId = stationId`
-- `idempotency`: для `stationId` действует правило "последнее состояние побеждает"
-- `payload`:
+- `владелец факта`: `WCS`
+- `публикатор`: `Station/Site Integration Adapter`
+- `потребители`: логика передачи `WCS`, операторская консоль, `Digital Twin`
+- `триггер`: адаптер получил новый подтверждённый факт о готовности пассивной станции
+- `постусловие`: `StationBoundary.readiness` обновлена
+- `корреляция`: `correlationId = stationId`
+- `идемпотентность`: для `stationId` действует правило "последнее состояние побеждает"
+- `состав полезной нагрузки`:
 
 ```text
 {
@@ -432,14 +432,14 @@ payload
 ### 5.16. `StationTransferFactReported`
 
 - `visibility`: `internal`, `operations`
-- `owner`: `WCS`
-- `producer`: `Station/Site Integration Adapter`
-- `consumers`: логика передачи `WCS`, аудит, операторская консоль
-- `trigger`: адаптер получил подтверждённый факт передачи на границе пассивной станции
-- `postcondition`: `WCS` может публиковать `PayloadCustodyChanged` и завершать `StationTransfer`
-- `correlation`: `correlationId = executionTask.correlationId`, если он известен; иначе связывание выполняется по текущему контексту станции
-- `idempotency`: повтор по `stationId + direction + correlationId + factType` не меняет модель
-- `payload`:
+- `владелец факта`: `WCS`
+- `публикатор`: `Station/Site Integration Adapter`
+- `потребители`: логика передачи `WCS`, аудит, операторская консоль
+- `триггер`: адаптер получил подтверждённый факт передачи на границе пассивной станции
+- `постусловие`: `WCS` может публиковать `PayloadCustodyChanged` и завершать `StationTransfer`
+- `корреляция`: `correlationId = executionTask.correlationId`, если он известен; иначе связывание выполняется по текущему контексту станции
+- `идемпотентность`: повтор по `stationId + direction + correlationId + factType` не меняет модель
+- `состав полезной нагрузки`:
 
 ```text
 {
@@ -453,7 +453,7 @@ payload
 
 ---
 
-## 6. Что не публикуется как northbound v0
+## 6. Что не публикуется наружу в `Northbound API v0`
 
 Следующие события остаются внутренними и не должны напрямую становиться внешним API:
 
@@ -473,8 +473,9 @@ payload
 
 ## 7. Что сознательно отложено
 
-- машиночитаемая спецификация полного платформенного event-stream beyond `Northbound API v0`;
-- дополнительные northbound payload-варианты beyond `job.accepted` и `job.state_changed`;
-- event versioning policy beyond `v0`;
+- машиночитаемая спецификация полного платформенного потока событий за пределами `Northbound API v0`;
+- дополнительные варианты внешней полезной нагрузки за пределами `job.accepted` и `job.state_changed`;
+- политика версионирования событий за пределами `v0`;
 - расширенный каталог причин `reasonCode`;
 - события административного и операторского управления вне базового контура исполнения.
+
