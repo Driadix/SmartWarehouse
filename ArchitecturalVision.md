@@ -40,6 +40,7 @@
 - **`Execution-Semantics-v0`:** минимальные правила исполнения `Navigate`, `StationTransfer`, `CarrierTransfer` и восстановления.
 - **`Station-Site-Integration-v0`:** правила интеграции пассивных станций и site-сигналов с `WCS`.
 - **`Capability-Catalog-Phase-1`:** минимальный каталог статических и активных возможностей базового состава.
+- **`docs/api/southbound/asyncapi-v0.yaml`:** машиночитаемая спецификация нижнего контракта v0 в формате `AsyncAPI`.
 - **Каталог событий (`Event Catalog`):** полный каталог событий (в разработке).
 - **Спецификация API (`API Spec`):** спецификации верхнего и нижнего интеграционных интерфейсов (в разработке).
 
@@ -350,6 +351,8 @@ ShuttleMovementModeChanged
 Имитационные модели обязаны реализовывать тот же нижний контракт интеграции, что и реальные устройства.
 
 Пассивные станции текущего базового состава не имеют собственного нижнего сеанса управления и не требуют отдельного `ACL` для исполнения операции на границе станции.
+
+Машиночитаемая спецификация текущего нижнего контракта v0 ведётся в [asyncapi-v0.yaml](/c:/Projects/SmartWarehouse/docs/api/southbound/asyncapi-v0.yaml) и JSON Schema-файлах в [docs/api/schemas/southbound](/c:/Projects/SmartWarehouse/docs/api/schemas/southbound).
 
 ---
 

@@ -1,0 +1,193 @@
+asyncapi: 3.0.0
+info:
+  title: SmartWarehouse Southbound Contract v0
+  version: 0.1.0
+  description: |
+    Машиночитаемая спецификация нижнего контракта интеграции для текущего базового состава.
+    Точка зрения спецификации: платформа `WCS`.
+    Платформа публикует команды и принимает события устройств.
+defaultContentType: application/json
+channels:
+  requestStateSnapshotCommand:
+    address: southbound.command.requestStateSnapshot
+    messages:
+      requestStateSnapshot:
+        $ref: '#/components/messages/RequestStateSnapshotMessage'
+  suspendExecutionCommand:
+    address: southbound.command.suspendExecution
+    messages:
+      suspendExecution:
+        $ref: '#/components/messages/SuspendExecutionMessage'
+  resumeExecutionCommand:
+    address: southbound.command.resumeExecution
+    messages:
+      resumeExecution:
+        $ref: '#/components/messages/ResumeExecutionMessage'
+  grantMotionWindowCommand:
+    address: southbound.command.shuttle3d.grantMotionWindow
+    messages:
+      grantMotionWindow:
+        $ref: '#/components/messages/GrantMotionWindowMessage'
+  prepareTransferCommand:
+    address: southbound.command.prepareTransfer
+    messages:
+      prepareTransfer:
+        $ref: '#/components/messages/PrepareTransferMessage'
+  moveCarrierCommand:
+    address: southbound.command.hybridLift.moveCarrier
+    messages:
+      moveCarrier:
+        $ref: '#/components/messages/MoveCarrierMessage'
+  heartbeatEvent:
+    address: southbound.event.heartbeat
+    messages:
+      heartbeat:
+        $ref: '#/components/messages/HeartbeatMessage'
+  stateSnapshotEvent:
+    address: southbound.event.stateSnapshot
+    messages:
+      stateSnapshot:
+        $ref: '#/components/messages/StateSnapshotMessage'
+  nodeReachedEvent:
+    address: southbound.event.nodeReached
+    messages:
+      nodeReached:
+        $ref: '#/components/messages/NodeReachedMessage'
+  transferReadyEvent:
+    address: southbound.event.transferReady
+    messages:
+      transferReady:
+        $ref: '#/components/messages/TransferReadyMessage'
+  transferCommittedEvent:
+    address: southbound.event.transferCommitted
+    messages:
+      transferCommitted:
+        $ref: '#/components/messages/TransferCommittedMessage'
+  executionRejectedEvent:
+    address: southbound.event.executionRejected
+    messages:
+      executionRejected:
+        $ref: '#/components/messages/ExecutionRejectedMessage'
+operations:
+  sendRequestStateSnapshot:
+    action: send
+    channel:
+      $ref: '#/channels/requestStateSnapshotCommand'
+    messages:
+      - $ref: '#/channels/requestStateSnapshotCommand/messages/requestStateSnapshot'
+  sendSuspendExecution:
+    action: send
+    channel:
+      $ref: '#/channels/suspendExecutionCommand'
+    messages:
+      - $ref: '#/channels/suspendExecutionCommand/messages/suspendExecution'
+  sendResumeExecution:
+    action: send
+    channel:
+      $ref: '#/channels/resumeExecutionCommand'
+    messages:
+      - $ref: '#/channels/resumeExecutionCommand/messages/resumeExecution'
+  sendGrantMotionWindow:
+    action: send
+    channel:
+      $ref: '#/channels/grantMotionWindowCommand'
+    messages:
+      - $ref: '#/channels/grantMotionWindowCommand/messages/grantMotionWindow'
+  sendPrepareTransfer:
+    action: send
+    channel:
+      $ref: '#/channels/prepareTransferCommand'
+    messages:
+      - $ref: '#/channels/prepareTransferCommand/messages/prepareTransfer'
+  sendMoveCarrier:
+    action: send
+    channel:
+      $ref: '#/channels/moveCarrierCommand'
+    messages:
+      - $ref: '#/channels/moveCarrierCommand/messages/moveCarrier'
+  receiveHeartbeat:
+    action: receive
+    channel:
+      $ref: '#/channels/heartbeatEvent'
+    messages:
+      - $ref: '#/channels/heartbeatEvent/messages/heartbeat'
+  receiveStateSnapshot:
+    action: receive
+    channel:
+      $ref: '#/channels/stateSnapshotEvent'
+    messages:
+      - $ref: '#/channels/stateSnapshotEvent/messages/stateSnapshot'
+  receiveNodeReached:
+    action: receive
+    channel:
+      $ref: '#/channels/nodeReachedEvent'
+    messages:
+      - $ref: '#/channels/nodeReachedEvent/messages/nodeReached'
+  receiveTransferReady:
+    action: receive
+    channel:
+      $ref: '#/channels/transferReadyEvent'
+    messages:
+      - $ref: '#/channels/transferReadyEvent/messages/transferReady'
+  receiveTransferCommitted:
+    action: receive
+    channel:
+      $ref: '#/channels/transferCommittedEvent'
+    messages:
+      - $ref: '#/channels/transferCommittedEvent/messages/transferCommitted'
+  receiveExecutionRejected:
+    action: receive
+    channel:
+      $ref: '#/channels/executionRejectedEvent'
+    messages:
+      - $ref: '#/channels/executionRejectedEvent/messages/executionRejected'
+components:
+  messages:
+    RequestStateSnapshotMessage:
+      name: RequestStateSnapshot
+      payload:
+        $ref: '../schemas/southbound/request-state-snapshot-message.schema.json'
+    SuspendExecutionMessage:
+      name: SuspendExecution
+      payload:
+        $ref: '../schemas/southbound/suspend-execution-message.schema.json'
+    ResumeExecutionMessage:
+      name: ResumeExecution
+      payload:
+        $ref: '../schemas/southbound/resume-execution-message.schema.json'
+    GrantMotionWindowMessage:
+      name: GrantMotionWindow
+      payload:
+        $ref: '../schemas/southbound/grant-motion-window-message.schema.json'
+    PrepareTransferMessage:
+      name: PrepareTransfer
+      payload:
+        $ref: '../schemas/southbound/prepare-transfer-message.schema.json'
+    MoveCarrierMessage:
+      name: MoveCarrier
+      payload:
+        $ref: '../schemas/southbound/move-carrier-message.schema.json'
+    HeartbeatMessage:
+      name: Heartbeat
+      payload:
+        $ref: '../schemas/southbound/heartbeat-message.schema.json'
+    StateSnapshotMessage:
+      name: StateSnapshot
+      payload:
+        $ref: '../schemas/southbound/state-snapshot-message.schema.json'
+    NodeReachedMessage:
+      name: NodeReached
+      payload:
+        $ref: '../schemas/southbound/node-reached-message.schema.json'
+    TransferReadyMessage:
+      name: TransferReady
+      payload:
+        $ref: '../schemas/southbound/transfer-ready-message.schema.json'
+    TransferCommittedMessage:
+      name: TransferCommitted
+      payload:
+        $ref: '../schemas/southbound/transfer-committed-message.schema.json'
+    ExecutionRejectedMessage:
+      name: ExecutionRejected
+      payload:
+        $ref: '../schemas/southbound/execution-rejected-message.schema.json'

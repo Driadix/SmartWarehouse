@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartwarehouse.local/schemas/southbound/heartbeat-message.schema.json",
+  "title": "HeartbeatMessage",
+  "allOf": [
+    {
+      "$ref": "./base-message-envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "messageType": {
+          "const": "Heartbeat"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "leaseUntil"
+          ],
+          "properties": {
+            "leaseUntil": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

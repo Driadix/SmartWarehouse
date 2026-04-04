@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartwarehouse.local/schemas/southbound/grant-motion-window-message.schema.json",
+  "title": "GrantMotionWindowMessage",
+  "allOf": [
+    {
+      "$ref": "./base-message-envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "messageType": {
+          "const": "GrantMotionWindow"
+        },
+        "family": {
+          "const": "Shuttle3D"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "nodePath"
+          ],
+          "properties": {
+            "nodePath": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

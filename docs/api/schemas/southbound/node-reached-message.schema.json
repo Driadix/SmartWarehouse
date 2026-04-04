@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartwarehouse.local/schemas/southbound/node-reached-message.schema.json",
+  "title": "NodeReachedMessage",
+  "allOf": [
+    {
+      "$ref": "./base-message-envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "messageType": {
+          "const": "NodeReached"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "nodeId"
+          ],
+          "properties": {
+            "nodeId": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

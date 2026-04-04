@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartwarehouse.local/schemas/southbound/request-state-snapshot-message.schema.json",
+  "title": "RequestStateSnapshotMessage",
+  "allOf": [
+    {
+      "$ref": "./base-message-envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "messageType": {
+          "const": "RequestStateSnapshot"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

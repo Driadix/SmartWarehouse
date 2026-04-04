@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartwarehouse.local/schemas/southbound/execution-rejected-message.schema.json",
+  "title": "ExecutionRejectedMessage",
+  "allOf": [
+    {
+      "$ref": "./base-message-envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "messageType": {
+          "const": "ExecutionRejected"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "rejectedMessageType",
+            "reasonCode",
+            "retryable"
+          ],
+          "properties": {
+            "rejectedMessageType": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reasonCode": {
+              "type": "string",
+              "minLength": 1
+            },
+            "retryable": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

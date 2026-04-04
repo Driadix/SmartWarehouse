@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartwarehouse.local/schemas/southbound/state-snapshot-message.schema.json",
+  "title": "StateSnapshotMessage",
+  "allOf": [
+    {
+      "$ref": "./base-message-envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "messageType": {
+          "const": "StateSnapshot"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "currentNode",
+            "executionState",
+            "activeCapabilities",
+            "faultState",
+            "familySpecificState"
+          ],
+          "properties": {
+            "currentNode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "executionState": {
+              "enum": [
+                "IDLE",
+                "EXECUTING",
+                "SUSPENDED",
+                "FAULTED"
+              ]
+            },
+            "activeCommand": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "activeCapabilities": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "faultState": {
+              "enum": [
+                "NONE",
+                "ACTIVE",
+                "LATCHED"
+              ]
+            },
+            "familySpecificState": {
+              "type": "object"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartwarehouse.local/schemas/southbound/base-message-envelope.schema.json",
+  "title": "SouthboundBaseMessageEnvelope",
+  "type": "object",
+  "required": [
+    "messageId",
+    "schemaVersion",
+    "messageType",
+    "correlationId",
+    "deviceId",
+    "family",
+    "sessionId",
+    "platformTime",
+    "payload"
+  ],
+  "properties": {
+    "messageId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schemaVersion": {
+      "const": "v0"
+    },
+    "messageType": {
+      "type": "string",
+      "minLength": 1
+    },
+    "correlationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "causationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "deviceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "family": {
+      "enum": [
+        "Shuttle3D",
+        "HybridLift"
+      ]
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "deviceTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "platformTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payload": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

@@ -201,6 +201,8 @@ familySpecificState
 
 Программная имитационная модель текущего базового состава обязана реализовывать тот же канонический контракт v0, что и реальные адаптеры. Имитационная модель не имеет права использовать внутренние сокращённые интерфейсы, которых не будет у оборудования.
 
+Машиночитаемая спецификация контракта v0 поддерживается в [asyncapi-v0.yaml](/c:/Projects/SmartWarehouse/docs/api/southbound/asyncapi-v0.yaml) и JSON Schema-файлах каталога [docs/api/schemas/southbound](/c:/Projects/SmartWarehouse/docs/api/schemas/southbound).
+
 ---
 
 ## 3. Последствия
