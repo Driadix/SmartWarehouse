@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartwarehouse.local/schemas/southbound/motion-window-progress-message.schema.json",
+  "title": "MotionWindowProgressMessage",
+  "allOf": [
+    {
+      "$ref": "./base-message-envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "messageType": {
+          "const": "MotionWindowProgress"
+        },
+        "family": {
+          "const": "Shuttle3D"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "currentNode"
+          ],
+          "properties": {
+            "currentNode": {
+              "type": "string",
+              "minLength": 1
+            },
+            "remainingNodePath": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

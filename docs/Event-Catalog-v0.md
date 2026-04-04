@@ -3,7 +3,7 @@
 
 **Статус:** Живой документ  
 **Последнее обновление:** 2026-04-04  
-**Связанные артефакты:** ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, Execution-Semantics-v0.md, Station-Site-Integration-v0.md, Northbound-API-v0.md, ADR-004, docs/api/northbound/openapi-v0.yaml, docs/api/southbound/asyncapi-v0.yaml
+**Связанные артефакты:** ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, Execution-Semantics-v0.md, Station-Site-Integration-v0.md, Northbound-API-v0.md, ADR-004, ADR-008, docs/api/northbound/openapi-v0.yaml, docs/api/southbound/asyncapi-v0.yaml
 
 ---
 
@@ -158,7 +158,7 @@ payload
 - `visibility`: `internal`, `operations`
 - `owner`: `WCS`
 - `producer`: `WCS`
-- `consumers`: `Digital Twin`, операторские проекции, локальные проекции состояния
+- `consumers`: `WES`, `Digital Twin`, операторские проекции, локальные проекции состояния
 - `trigger`: подтверждённый переход состояния `ExecutionTask`
 - `postcondition`: текущее состояние шага синхронизировано в операционной модели
 - `correlation`: `correlationId = executionTask.correlationId`
@@ -173,6 +173,9 @@ payload
   assigneeId
   previousState
   newState
+  reasonCode?
+  resolutionHint?: WAIT_AND_RETRY | REPLAN_REQUIRED | OPERATOR_ATTENTION
+  replanRequired?
   sourceNode?
   targetNode?
   transferMode?

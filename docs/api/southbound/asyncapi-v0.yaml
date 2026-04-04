@@ -1,12 +1,13 @@
 asyncapi: 3.1.0
 info:
   title: SmartWarehouse Southbound Contract v0
-  version: 0.1.1
+  version: 0.2.0
   description: |
     Машиночитаемая спецификация нижнего контракта интеграции для текущего базового состава.
     Точка зрения спецификации: платформа `WCS`.
     Платформа публикует команды и принимает события устройств.
-    Структура документа фиксируется в терминах `AsyncAPI 3.1.0`: `channels`, `operations` и `components.messages`.
+    Спецификация синхронизирована с `ADR-004` и фиксирует полный минимальный набор
+    общих команд, команд семейств ресурсов и событий устройств текущего `v0`.
 defaultContentType: application/json
 channels:
   requestStateSnapshotCommand:
@@ -24,16 +25,46 @@ channels:
     messages:
       resumeExecution:
         $ref: '#/components/messages/ResumeExecutionMessage'
+  clearFaultCommand:
+    address: southbound.command.clearFault
+    messages:
+      clearFault:
+        $ref: '#/components/messages/ClearFaultMessage'
+  acknowledgeAlarmCommand:
+    address: southbound.command.acknowledgeAlarm
+    messages:
+      acknowledgeAlarm:
+        $ref: '#/components/messages/AcknowledgeAlarmMessage'
   grantMotionWindowCommand:
     address: southbound.command.shuttle3d.grantMotionWindow
     messages:
       grantMotionWindow:
         $ref: '#/components/messages/GrantMotionWindowMessage'
+  revokeMotionWindowCommand:
+    address: southbound.command.shuttle3d.revokeMotionWindow
+    messages:
+      revokeMotionWindow:
+        $ref: '#/components/messages/RevokeMotionWindowMessage'
   prepareTransferCommand:
     address: southbound.command.prepareTransfer
     messages:
       prepareTransfer:
         $ref: '#/components/messages/PrepareTransferMessage'
+  commitTransferCommand:
+    address: southbound.command.commitTransfer
+    messages:
+      commitTransfer:
+        $ref: '#/components/messages/CommitTransferMessage'
+  abortTransferCommand:
+    address: southbound.command.abortTransfer
+    messages:
+      abortTransfer:
+        $ref: '#/components/messages/AbortTransferMessage'
+  executeActionCommand:
+    address: southbound.command.executeAction
+    messages:
+      executeAction:
+        $ref: '#/components/messages/ExecuteActionMessage'
   moveCarrierCommand:
     address: southbound.command.hybridLift.moveCarrier
     messages:
@@ -49,11 +80,26 @@ channels:
     messages:
       stateSnapshot:
         $ref: '#/components/messages/StateSnapshotMessage'
+  capabilityReportedEvent:
+    address: southbound.event.capabilityReported
+    messages:
+      capabilityReported:
+        $ref: '#/components/messages/CapabilityReportedMessage'
+  capabilityChangedEvent:
+    address: southbound.event.capabilityChanged
+    messages:
+      capabilityChanged:
+        $ref: '#/components/messages/CapabilityChangedMessage'
   nodeReachedEvent:
     address: southbound.event.nodeReached
     messages:
       nodeReached:
         $ref: '#/components/messages/NodeReachedMessage'
+  motionWindowProgressEvent:
+    address: southbound.event.motionWindowProgress
+    messages:
+      motionWindowProgress:
+        $ref: '#/components/messages/MotionWindowProgressMessage'
   transferReadyEvent:
     address: southbound.event.transferReady
     messages:
@@ -64,6 +110,26 @@ channels:
     messages:
       transferCommitted:
         $ref: '#/components/messages/TransferCommittedMessage'
+  transferAbortedEvent:
+    address: southbound.event.transferAborted
+    messages:
+      transferAborted:
+        $ref: '#/components/messages/TransferAbortedMessage'
+  actionCompletedEvent:
+    address: southbound.event.actionCompleted
+    messages:
+      actionCompleted:
+        $ref: '#/components/messages/ActionCompletedMessage'
+  faultRaisedEvent:
+    address: southbound.event.faultRaised
+    messages:
+      faultRaised:
+        $ref: '#/components/messages/FaultRaisedMessage'
+  faultClearedEvent:
+    address: southbound.event.faultCleared
+    messages:
+      faultCleared:
+        $ref: '#/components/messages/FaultClearedMessage'
   executionRejectedEvent:
     address: southbound.event.executionRejected
     messages:
@@ -88,18 +154,54 @@ operations:
       $ref: '#/channels/resumeExecutionCommand'
     messages:
       - $ref: '#/channels/resumeExecutionCommand/messages/resumeExecution'
+  sendClearFault:
+    action: send
+    channel:
+      $ref: '#/channels/clearFaultCommand'
+    messages:
+      - $ref: '#/channels/clearFaultCommand/messages/clearFault'
+  sendAcknowledgeAlarm:
+    action: send
+    channel:
+      $ref: '#/channels/acknowledgeAlarmCommand'
+    messages:
+      - $ref: '#/channels/acknowledgeAlarmCommand/messages/acknowledgeAlarm'
   sendGrantMotionWindow:
     action: send
     channel:
       $ref: '#/channels/grantMotionWindowCommand'
     messages:
       - $ref: '#/channels/grantMotionWindowCommand/messages/grantMotionWindow'
+  sendRevokeMotionWindow:
+    action: send
+    channel:
+      $ref: '#/channels/revokeMotionWindowCommand'
+    messages:
+      - $ref: '#/channels/revokeMotionWindowCommand/messages/revokeMotionWindow'
   sendPrepareTransfer:
     action: send
     channel:
       $ref: '#/channels/prepareTransferCommand'
     messages:
       - $ref: '#/channels/prepareTransferCommand/messages/prepareTransfer'
+  sendCommitTransfer:
+    action: send
+    channel:
+      $ref: '#/channels/commitTransferCommand'
+    messages:
+      - $ref: '#/channels/commitTransferCommand/messages/commitTransfer'
+  sendAbortTransfer:
+    action: send
+    channel:
+      $ref: '#/channels/abortTransferCommand'
+    messages:
+      - $ref: '#/channels/abortTransferCommand/messages/abortTransfer'
+  sendExecuteAction:
+    action: send
+    channel:
+      $ref: '#/channels/executeActionCommand'
+    messages:
+      - $ref: '#/channels/executeActionCommand/messages/executeAction'
   sendMoveCarrier:
     action: send
     channel:
@@ -118,12 +220,30 @@ operations:
       $ref: '#/channels/stateSnapshotEvent'
     messages:
       - $ref: '#/channels/stateSnapshotEvent/messages/stateSnapshot'
+  receiveCapabilityReported:
+    action: receive
+    channel:
+      $ref: '#/channels/capabilityReportedEvent'
+    messages:
+      - $ref: '#/channels/capabilityReportedEvent/messages/capabilityReported'
+  receiveCapabilityChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/capabilityChangedEvent'
+    messages:
+      - $ref: '#/channels/capabilityChangedEvent/messages/capabilityChanged'
   receiveNodeReached:
     action: receive
     channel:
       $ref: '#/channels/nodeReachedEvent'
     messages:
       - $ref: '#/channels/nodeReachedEvent/messages/nodeReached'
+  receiveMotionWindowProgress:
+    action: receive
+    channel:
+      $ref: '#/channels/motionWindowProgressEvent'
+    messages:
+      - $ref: '#/channels/motionWindowProgressEvent/messages/motionWindowProgress'
   receiveTransferReady:
     action: receive
     channel:
@@ -136,6 +256,30 @@ operations:
       $ref: '#/channels/transferCommittedEvent'
     messages:
       - $ref: '#/channels/transferCommittedEvent/messages/transferCommitted'
+  receiveTransferAborted:
+    action: receive
+    channel:
+      $ref: '#/channels/transferAbortedEvent'
+    messages:
+      - $ref: '#/channels/transferAbortedEvent/messages/transferAborted'
+  receiveActionCompleted:
+    action: receive
+    channel:
+      $ref: '#/channels/actionCompletedEvent'
+    messages:
+      - $ref: '#/channels/actionCompletedEvent/messages/actionCompleted'
+  receiveFaultRaised:
+    action: receive
+    channel:
+      $ref: '#/channels/faultRaisedEvent'
+    messages:
+      - $ref: '#/channels/faultRaisedEvent/messages/faultRaised'
+  receiveFaultCleared:
+    action: receive
+    channel:
+      $ref: '#/channels/faultClearedEvent'
+    messages:
+      - $ref: '#/channels/faultClearedEvent/messages/faultCleared'
   receiveExecutionRejected:
     action: receive
     channel:
@@ -156,14 +300,38 @@ components:
       name: ResumeExecution
       payload:
         $ref: '../schemas/southbound/resume-execution-message.schema.json'
+    ClearFaultMessage:
+      name: ClearFault
+      payload:
+        $ref: '../schemas/southbound/clear-fault-message.schema.json'
+    AcknowledgeAlarmMessage:
+      name: AcknowledgeAlarm
+      payload:
+        $ref: '../schemas/southbound/acknowledge-alarm-message.schema.json'
     GrantMotionWindowMessage:
       name: GrantMotionWindow
       payload:
         $ref: '../schemas/southbound/grant-motion-window-message.schema.json'
+    RevokeMotionWindowMessage:
+      name: RevokeMotionWindow
+      payload:
+        $ref: '../schemas/southbound/revoke-motion-window-message.schema.json'
     PrepareTransferMessage:
       name: PrepareTransfer
       payload:
         $ref: '../schemas/southbound/prepare-transfer-message.schema.json'
+    CommitTransferMessage:
+      name: CommitTransfer
+      payload:
+        $ref: '../schemas/southbound/commit-transfer-message.schema.json'
+    AbortTransferMessage:
+      name: AbortTransfer
+      payload:
+        $ref: '../schemas/southbound/abort-transfer-message.schema.json'
+    ExecuteActionMessage:
+      name: ExecuteAction
+      payload:
+        $ref: '../schemas/southbound/execute-action-message.schema.json'
     MoveCarrierMessage:
       name: MoveCarrier
       payload:
@@ -176,10 +344,22 @@ components:
       name: StateSnapshot
       payload:
         $ref: '../schemas/southbound/state-snapshot-message.schema.json'
+    CapabilityReportedMessage:
+      name: CapabilityReported
+      payload:
+        $ref: '../schemas/southbound/capability-reported-message.schema.json'
+    CapabilityChangedMessage:
+      name: CapabilityChanged
+      payload:
+        $ref: '../schemas/southbound/capability-changed-message.schema.json'
     NodeReachedMessage:
       name: NodeReached
       payload:
         $ref: '../schemas/southbound/node-reached-message.schema.json'
+    MotionWindowProgressMessage:
+      name: MotionWindowProgress
+      payload:
+        $ref: '../schemas/southbound/motion-window-progress-message.schema.json'
     TransferReadyMessage:
       name: TransferReady
       payload:
@@ -188,6 +368,22 @@ components:
       name: TransferCommitted
       payload:
         $ref: '../schemas/southbound/transfer-committed-message.schema.json'
+    TransferAbortedMessage:
+      name: TransferAborted
+      payload:
+        $ref: '../schemas/southbound/transfer-aborted-message.schema.json'
+    ActionCompletedMessage:
+      name: ActionCompleted
+      payload:
+        $ref: '../schemas/southbound/action-completed-message.schema.json'
+    FaultRaisedMessage:
+      name: FaultRaised
+      payload:
+        $ref: '../schemas/southbound/fault-raised-message.schema.json'
+    FaultClearedMessage:
+      name: FaultCleared
+      payload:
+        $ref: '../schemas/southbound/fault-cleared-message.schema.json'
     ExecutionRejectedMessage:
       name: ExecutionRejected
       payload:

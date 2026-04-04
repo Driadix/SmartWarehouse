@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartwarehouse.local/schemas/southbound/acknowledge-alarm-message.schema.json",
+  "title": "AcknowledgeAlarmMessage",
+  "allOf": [
+    {
+      "$ref": "./base-message-envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "messageType": {
+          "const": "AcknowledgeAlarm"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "alarmCode"
+          ],
+          "properties": {
+            "alarmCode": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

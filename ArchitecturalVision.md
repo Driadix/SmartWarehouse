@@ -1,10 +1,10 @@
 # Архитектурное видение и границы системы
 ### Умный склад — платформа WES/WCS
 
-**Версия:** 1.6  
+**Версия:** 1.7  
 **Статус:** Живой документ  
 **Последнее обновление:** 2026-04-04  
-**Связанные артефакты:** Glossary, Architecture-Baseline-Phase-1, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, DomainModel-v0, Topology-Configuration-Model-v0, Execution-Semantics-v0, Station-Site-Integration-v0, Capability-Catalog-Phase-1, Event-Catalog-v0, Northbound-API-v0, Contract-Acceptance-Matrix-v0, docs/api/northbound/openapi-v0.yaml, docs/api/southbound/asyncapi-v0.yaml
+**Связанные артефакты:** Glossary, Architecture-Baseline-Phase-1, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, ADR-008, ADR-009, ADR-010, ADR-011, DomainModel-v0, Topology-Configuration-Model-v0, Execution-Semantics-v0, Station-Site-Integration-v0, Capability-Catalog-Phase-1, Event-Catalog-v0, Northbound-API-v0, Contract-Acceptance-Matrix-v0, docs/api/northbound/openapi-v0.yaml, docs/api/southbound/asyncapi-v0.yaml
 
 ---
 
@@ -35,6 +35,10 @@
 - **ADR-005:** граница между планированием `WES` и материализацией исполнения `WCS`.
 - **ADR-006:** консервативное восстановление и повторное согласование после потери сеанса устройства.
 - **ADR-007:** короткое окно авторизации движения до следующей конфликтной точки.
+- **ADR-008:** внутренний прикладной контракт `WES <-> WCS` v0.
+- **ADR-009:** модель хранения данных и публикации событий для `Phase 1`.
+- **ADR-010:** физическая runtime-топология `Phase 1`.
+- **ADR-011:** технологический baseline `Phase 1`.
 - **`DomainModel-v0`:** минимальная предметная модель текущего базового состава реализации.
 - **`Topology-Configuration-Model-v0`:** минимальная модель конфигурации топологии, уровней, шахт, станций, сервисных точек и привязок ресурсов.
 - **`Execution-Semantics-v0`:** минимальные правила исполнения `Navigate`, `StationTransfer`, `CarrierTransfer` и восстановления.
@@ -411,3 +415,7 @@ ShuttleMovementModeChanged
 | ADR-005 | Граница между планированием `WES` и материализацией исполнения `WCS` | Принято |
 | ADR-006 | Консервативное восстановление и повторное согласование после потери сеанса устройства | Принято |
 | ADR-007 | Короткое окно авторизации движения до следующей конфликтной точки | Принято |
+| ADR-008 | Внутренний прикладной контракт `WES <-> WCS` v0 | Proposed |
+| ADR-009 | Модель хранения данных и публикации событий для `Phase 1` | Proposed |
+| ADR-010 | Физическая runtime-топология `Phase 1` | Proposed |
+| ADR-011 | Технологический baseline `Phase 1` | Proposed |

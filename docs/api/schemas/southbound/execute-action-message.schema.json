@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartwarehouse.local/schemas/southbound/execute-action-message.schema.json",
+  "title": "ExecuteActionMessage",
+  "allOf": [
+    {
+      "$ref": "./base-message-envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "messageType": {
+          "const": "ExecuteAction"
+        },
+        "family": {
+          "enum": [
+            "Shuttle3D",
+            "HybridLift"
+          ]
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "actionType"
+          ],
+          "properties": {
+            "actionType": {
+              "type": "string",
+              "minLength": 1
+            },
+            "parameters": {
+              "type": "object"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

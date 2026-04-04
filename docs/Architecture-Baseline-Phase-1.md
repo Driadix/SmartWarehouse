@@ -2,8 +2,8 @@
 ### 3D-шаттл + гибридный лифт + станции загрузки и выгрузки
 
 **Статус:** Базовый документ текущей реализации  
-**Последнее обновление:** 2026-04-03  
-**Связанные артефакты:** Glossary, ArchitecturalVision.md, DomainModel-v0, Topology-Configuration-Model-v0.md, Execution-Semantics-v0.md, Station-Site-Integration-v0.md, Capability-Catalog-Phase-1.md, Event-Catalog-v0.md, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007
+**Последнее обновление:** 2026-04-04  
+**Связанные артефакты:** Glossary, ArchitecturalVision.md, DomainModel-v0, Topology-Configuration-Model-v0.md, Execution-Semantics-v0.md, Station-Site-Integration-v0.md, Capability-Catalog-Phase-1.md, Event-Catalog-v0.md, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, ADR-008, ADR-009, ADR-010, ADR-011
 
 ---
 

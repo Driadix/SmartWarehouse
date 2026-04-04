@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartwarehouse.local/schemas/southbound/commit-transfer-message.schema.json",
+  "title": "CommitTransferMessage",
+  "allOf": [
+    {
+      "$ref": "./base-message-envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "messageType": {
+          "const": "CommitTransfer"
+        },
+        "family": {
+          "enum": [
+            "Shuttle3D",
+            "HybridLift"
+          ]
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "transferPointId"
+          ],
+          "properties": {
+            "transferPointId": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

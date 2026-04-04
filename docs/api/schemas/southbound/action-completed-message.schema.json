@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartwarehouse.local/schemas/southbound/action-completed-message.schema.json",
+  "title": "ActionCompletedMessage",
+  "allOf": [
+    {
+      "$ref": "./base-message-envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "messageType": {
+          "const": "ActionCompleted"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "actionType"
+          ],
+          "properties": {
+            "actionType": {
+              "type": "string",
+              "minLength": 1
+            },
+            "result": {
+              "type": "object"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}
