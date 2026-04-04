@@ -1,6 +1,6 @@
 # ADR-008: Внутренний прикладной контракт `WES <-> WCS` v0
 
-**Статус:** Предложено  
+**Статус:** Принято  
 **Дата:** 2026-04-04  
 **Связанные артефакты:** ArchitecturalVision.md, DomainModel-v0.md, Event-Catalog-v0.md, ADR-003, ADR-005, ADR-006, ADR-007
 

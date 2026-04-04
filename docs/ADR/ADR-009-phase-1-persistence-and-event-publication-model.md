@@ -1,6 +1,6 @@
 # ADR-009: Модель хранения данных и публикации событий для фазы 1
 
-**Статус:** Предложено  
+**Статус:** Принято  
 **Дата:** 2026-04-04  
 **Связанные артефакты:** ArchitecturalVision.md, DomainModel-v0.md, Event-Catalog-v0.md, Topology-Configuration-Model-v0.md, Northbound-API-v0.md, ADR-003, ADR-004, ADR-008
 

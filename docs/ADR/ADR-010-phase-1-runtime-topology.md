@@ -1,6 +1,6 @@
 # ADR-010: Физическая топология исполнения фазы 1
 
-**Статус:** Предложено  
+**Статус:** Принято  
 **Дата:** 2026-04-04  
 **Связанные артефакты:** ArchitecturalVision.md, Architecture-Baseline-Phase-1.md, Station-Site-Integration-v0.md, ADR-003, ADR-004, ADR-008, ADR-009
 
