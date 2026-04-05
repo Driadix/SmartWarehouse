@@ -2,7 +2,7 @@ name: smartwarehouse-local
 
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     container_name: smartwarehouse-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-smartwarehouse}
@@ -34,7 +34,7 @@ services:
       - nats-data:/data
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.123.0
+    image: otel/opentelemetry-collector-contrib:0.149.0
     container_name: smartwarehouse-otel
     command: ["--config=/etc/otelcol-contrib/config.yaml"]
     ports:
