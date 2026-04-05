@@ -1,29 +1,44 @@
 # SmartWarehouse
 
-Стартовый монорепозиторий для платформы WES/WCS фазы 1.
+Монорепозиторий платформы WES/WCS для фазы 1.
 
-Текущее решение следует базовому составу из документации:
+## Что в репозитории сейчас
 
 - `platform-core` на `C#/.NET 10`
 - `simulation-host` на `Go`
-- резерв под `edge-integration-host`
-- резерв под `digital-twin-ui`
+- архитектурные документы, ADR и машиночитаемые контракты
+- локальная инфраструктура для `PostgreSQL`, `NATS JetStream`, `OpenTelemetry Collector`
 
-## Структура
+Кодовая база пока на раннем этапе: архитектура и контракты уже зафиксированы, реализация `platform-core` и симуляционного контура только разворачивается.
 
-- `src/platform-core` — ядро платформы, `Northbound API`, `WES`, `WCS`, проекции и инфраструктура
-- `src/simulation-host` — симулятор нижнего контура
-- `src/edge-integration-host` — будущий контур реальных `ACL` и site integration
-- `src/digital-twin-ui` — будущий пользовательский интерфейс
-- `tests` — unit, integration, contract и e2e-тесты
-- `topologies/phase1` — версионируемые фикстуры конфигурации склада
-- `eng` — bootstrap, локальная автоматизация и tooling для проверки контрактов
-- `deploy/local` — локальные конфигурации инфраструктуры
+## Ключевые каталоги
 
-## Быстрый старт
+- `docs/` — архитектурные документы, глоссарий, ADR, контракты
+- `src/platform-core/` — основной серверный контур
+- `src/simulation-host/` — симуляция и нижняя интеграция
+- `tests/` — unit, integration, contract, e2e
+- `topologies/phase1/` — фикстуры топологии
+- `deploy/local/` — локальные конфигурации инфраструктуры
+- `eng/` — bootstrap, scripts, проверка контрактов
+
+## С чего начинать
+
+- `docs/Glossary.md` — правила терминологии и оформления документации
+- `docs/ArchitecturalVision.md` — архитектурные границы и инварианты
+- `docs/Architecture-Baseline-Phase-1.md` — текущий базовый состав реализации
+- `docs/ADR/` — принятые решения по архитектуре и стеку
+
+## Локальный запуск
 
 1. `powershell -ExecutionPolicy Bypass -File eng/scripts/bootstrap.ps1`
-2. `docker compose --env-file .env.example up -d`
+2. `powershell -ExecutionPolicy Bypass -File eng/scripts/dev-up.ps1`
 3. `.\.dotnet\dotnet.exe build SmartWarehouse.slnx`
 
-Для `.NET 10` текущий CLI создаёт решение в формате `slnx`. Если потребуется совместимость со старым tooling, решение можно дополнительно сгенерировать в формате `.sln`.
+Полезные команды:
+
+- `powershell -ExecutionPolicy Bypass -File eng/scripts/dev-down.ps1`
+- `powershell -ExecutionPolicy Bypass -File eng/scripts/validate-contracts.ps1`
+- `.\.dotnet\dotnet.exe test SmartWarehouse.slnx`
+- `powershell -ExecutionPolicy Bypass -File eng/scripts/test-e2e.ps1`
+
+Альтернатива — использовать задачи из `Taskfile.yml`.

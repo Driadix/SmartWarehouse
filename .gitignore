@@ -4,7 +4,6 @@
 .idea/
 **/.codex
 **/.tmp**
-**/AGENTS.md
 **/bin/
 **/obj/
 **/node_modules/
