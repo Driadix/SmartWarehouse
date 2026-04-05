@@ -1,0 +1,142 @@
+schemaVersion: v0
+
+links:
+  - from: glossary
+    to: architectural-vision
+    relation: governs
+
+  - from: glossary
+    to: domain-model-v0
+    relation: governs
+
+  - from: glossary
+    to: execution-semantics-v0
+    relation: governs
+
+  - from: architecture-baseline-phase-1
+    to: architectural-vision
+    relation: elaborates
+
+  - from: adr-011-phase-1-technology-baseline
+    to: architectural-vision
+    relation: elaborates
+
+  - from: adr-009-phase-1-persistence-and-event-publication-model
+    to: architectural-vision
+    relation: elaborates
+
+  - from: adr-010-phase-1-runtime-topology
+    to: architectural-vision
+    relation: elaborates
+
+  - from: northbound-api-v0
+    to: openapi-v0
+    relation: machine_spec_for
+
+  - from: adr-004-canonical-southbound-contract-v0
+    to: asyncapi-v0
+    relation: machine_spec_for
+
+  - from: event-catalog-v0
+    to: asyncapi-v0
+    relation: complements
+
+  - from: topology-configuration-model-v0
+    to: topology-warehouse-a-nominal
+    relation: fixture_for
+
+  - from: topology-configuration-model-v0
+    to: topology-warehouse-a-no-route
+    relation: fixture_for
+
+  - from: contract-acceptance-matrix-v0
+    to: openapi-v0
+    relation: validates
+
+  - from: contract-acceptance-matrix-v0
+    to: asyncapi-v0
+    relation: validates
+
+  - from: entity.platform-core
+    to: project-smartwarehouse-platformcore-host
+    relation: implemented_by
+
+  - from: entity.platform-core
+    to: project-smartwarehouse-platformcore-application
+    relation: implemented_by
+
+  - from: entity.platform-core
+    to: project-smartwarehouse-platformcore-domain
+    relation: implemented_by
+
+  - from: entity.platform-core
+    to: project-smartwarehouse-platformcore-infrastructure
+    relation: implemented_by
+
+  - from: entity.platform-core
+    to: project-smartwarehouse-platformcore-dbmigrator
+    relation: implemented_by
+
+  - from: entity.simulation-host
+    to: simulation-host-module
+    relation: implemented_by
+
+  - from: entity.simulation-host
+    to: simulation-host-main
+    relation: implemented_by
+
+  - from: entity.northbound-api
+    to: openapi-v0
+    relation: specified_by
+
+  - from: entity.northbound-api
+    to: northbound-api-v0
+    relation: documented_by
+
+  - from: entity.southbound-contract
+    to: asyncapi-v0
+    relation: specified_by
+
+  - from: entity.southbound-contract
+    to: adr-004-canonical-southbound-contract-v0
+    relation: documented_by
+
+  - from: entity.application-contract
+    to: adr-008-internal-wes-wcs-application-contract-v0
+    relation: documented_by
+
+  - from: entity.topology-configuration
+    to: topology-configuration-model-v0
+    relation: documented_by
+
+  - from: entity.runtime-topology
+    to: adr-010-phase-1-runtime-topology
+    relation: documented_by
+
+  - from: entity.postgresql
+    to: local-compose
+    relation: configured_by
+
+  - from: entity.nats-jetstream
+    to: local-compose
+    relation: configured_by
+
+  - from: entity.open-telemetry
+    to: local-compose
+    relation: configured_by
+
+  - from: entity.documentation-rules
+    to: glossary
+    relation: documented_by
+
+  - from: entity.node-reached
+    to: schema-node-reached-message
+    relation: specified_by
+
+  - from: entity.transfer-committed
+    to: schema-transfer-committed-message
+    relation: specified_by
+
+  - from: entity.state-snapshot
+    to: schema-state-snapshot-message
+    relation: specified_by

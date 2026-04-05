@@ -1,0 +1,271 @@
+schemaVersion: v0
+
+artifacts:
+  - id: repo-readme
+    kind: repo-guide
+    path: README.md
+    authority: 50
+    aliases: [readme, overview]
+    tags: [repository, onboarding]
+
+  - id: agent-guide
+    kind: agent-guide
+    path: AGENTS.md
+    authority: 60
+    aliases: [agents, agent instructions]
+    tags: [agents, navigation, rules]
+
+  - id: taskfile
+    kind: task-runner
+    path: Taskfile.yml
+    authority: 45
+    aliases: [taskfile, tasks]
+    tags: [tasks, automation]
+
+  - id: global-dotnet-sdk
+    kind: sdk-config
+    path: global.json
+    authority: 55
+    aliases: [dotnet sdk, sdk version]
+    tags: [dotnet, sdk, version]
+
+  - id: central-package-management
+    kind: package-config
+    path: Directory.Packages.props
+    authority: 50
+    aliases: [central packages, package versions]
+    tags: [dotnet, nuget, packages]
+
+  - id: local-compose
+    kind: infrastructure-config
+    path: docker-compose.yml
+    authority: 60
+    aliases: [compose, local infrastructure]
+    tags: [docker, postgres, nats, otel]
+
+  - id: env-example
+    kind: environment-config
+    path: .env.example
+    authority: 45
+    aliases: [env, local env]
+    tags: [environment, ports, defaults]
+
+  - id: bootstrap-script
+    kind: script
+    path: eng/scripts/bootstrap.ps1
+    authority: 45
+    aliases: [bootstrap, setup]
+    tags: [bootstrap, setup, dotnet]
+
+  - id: dev-up-script
+    kind: script
+    path: eng/scripts/dev-up.ps1
+    authority: 45
+    aliases: [dev up, local up]
+    tags: [local-run, infrastructure]
+
+  - id: dev-down-script
+    kind: script
+    path: eng/scripts/dev-down.ps1
+    authority: 45
+    aliases: [dev down, local down]
+    tags: [local-run, infrastructure]
+
+  - id: validate-contracts-script
+    kind: script
+    path: eng/scripts/validate-contracts.ps1
+    authority: 50
+    aliases: [validate contracts]
+    tags: [contracts, validation]
+
+  - id: test-e2e-script
+    kind: script
+    path: eng/scripts/test-e2e.ps1
+    authority: 40
+    aliases: [test e2e]
+    tags: [tests, e2e]
+
+  - id: tooling-package
+    kind: tooling-config
+    path: eng/tooling/package.json
+    authority: 40
+    aliases: [tooling package]
+    tags: [tooling, node]
+
+  - id: glossary
+    kind: glossary
+    path: docs/Glossary.md
+    authority: 100
+    aliases: [глоссарий, terminology]
+    tags: [documentation, language, terminology]
+    sourceOfTruthFor: [terminology, documentation-writing]
+
+  - id: architectural-vision
+    kind: architecture
+    path: docs/ArchitecturalVision.md
+    authority: 95
+    aliases: [architecture vision, архитектурное видение]
+    tags: [architecture, boundaries, invariants]
+
+  - id: architecture-baseline-phase-1
+    kind: baseline
+    path: docs/Architecture-Baseline-Phase-1.md
+    authority: 92
+    aliases: [baseline, phase 1 baseline]
+    tags: [baseline, phase1, implementation]
+    sourceOfTruthFor: [phase1-baseline]
+
+  - id: capability-catalog-phase-1
+    kind: catalog
+    path: docs/Capability-Catalog-Phase-1.md
+    authority: 80
+    aliases: [capability catalog]
+    tags: [capabilities, phase1]
+
+  - id: contract-acceptance-matrix-v0
+    kind: contract-matrix
+    path: docs/Contract-Acceptance-Matrix-v0.md
+    authority: 75
+    aliases: [acceptance matrix]
+    tags: [contracts, acceptance, testing]
+
+  - id: domain-model-v0
+    kind: domain-model
+    path: docs/DomainModel-v0.md
+    authority: 88
+    aliases: [domain model]
+    tags: [domain, model, phase1]
+
+  - id: event-catalog-v0
+    kind: event-catalog
+    path: docs/Event-Catalog-v0.md
+    authority: 88
+    aliases: [event catalog]
+    tags: [events, contracts]
+
+  - id: execution-semantics-v0
+    kind: execution-semantics
+    path: docs/Execution-Semantics-v0.md
+    authority: 88
+    aliases: [execution semantics]
+    tags: [execution, semantics, wcs]
+
+  - id: northbound-api-v0
+    kind: contract-document
+    path: docs/Northbound-API-v0.md
+    authority: 88
+    aliases: [northbound api]
+    tags: [northbound, rest, webhook]
+
+  - id: station-site-integration-v0
+    kind: integration-document
+    path: docs/Station-Site-Integration-v0.md
+    authority: 82
+    aliases: [station site integration]
+    tags: [stations, integration, passive-station]
+
+  - id: topology-configuration-model-v0
+    kind: topology-model
+    path: docs/Topology-Configuration-Model-v0.md
+    authority: 88
+    aliases: [topology configuration]
+    tags: [topology, configuration]
+
+  - id: openapi-v0
+    kind: openapi-spec
+    path: docs/api/northbound/openapi-v0.yaml
+    authority: 84
+    aliases: [northbound openapi, openapi]
+    tags: [northbound, openapi, machine-readable]
+
+  - id: asyncapi-v0
+    kind: asyncapi-spec
+    path: docs/api/southbound/asyncapi-v0.yaml
+    authority: 84
+    aliases: [southbound asyncapi, asyncapi]
+    tags: [southbound, asyncapi, machine-readable]
+
+  - id: simulation-host-module
+    kind: go-module
+    path: src/simulation-host/go.mod
+    authority: 58
+    aliases: [simulation host module, go module]
+    tags: [simulation-host, go]
+
+  - id: simulation-host-main
+    kind: source-entrypoint
+    path: src/simulation-host/cmd/simulation-host/main.go
+    authority: 55
+    aliases: [simulation host main]
+    tags: [simulation-host, go, bootstrap]
+
+  - id: edge-integration-host-readme
+    kind: module-readme
+    path: src/edge-integration-host/README.md
+    authority: 45
+    aliases: [edge integration host]
+    tags: [edge, acl, placeholder]
+
+  - id: digital-twin-ui-readme
+    kind: module-readme
+    path: src/digital-twin-ui/README.md
+    authority: 45
+    aliases: [digital twin ui]
+    tags: [ui, digital-twin, placeholder]
+
+  - id: e2e-phase1-readme
+    kind: test-readme
+    path: tests/e2e/phase1/README.md
+    authority: 40
+    aliases: [e2e phase1]
+    tags: [tests, e2e, phase1]
+
+  - id: nats-local-config
+    kind: infrastructure-config
+    path: deploy/local/nats/nats-server.conf
+    authority: 50
+    aliases: [nats config]
+    tags: [nats, jetstream]
+
+  - id: otel-local-config
+    kind: infrastructure-config
+    path: deploy/local/otel/otel-collector-config.yaml
+    authority: 50
+    aliases: [otel config, collector config]
+    tags: [otel, observability]
+
+discovery:
+  - kind: adr
+    root: docs/ADR
+    pattern: "ADR-*.md"
+    authority: 88
+    idPrefix: adr
+    tags: [adr, architecture]
+
+  - kind: json-schema
+    root: docs/api/schemas/southbound
+    pattern: "*.schema.json"
+    authority: 80
+    idPrefix: schema
+    tags: [southbound, schema]
+
+  - kind: topology-fixture
+    root: topologies/phase1
+    pattern: "*.yaml"
+    authority: 65
+    idPrefix: topology
+    tags: [topology, fixture, phase1]
+
+  - kind: code-project
+    root: src/platform-core
+    pattern: "*.csproj"
+    authority: 58
+    idPrefix: project
+    tags: [platform-core, dotnet]
+
+  - kind: test-project
+    root: tests
+    pattern: "*.csproj"
+    authority: 48
+    idPrefix: test
+    tags: [tests, dotnet]

@@ -17,6 +17,10 @@ tasks:
     cmds:
       - powershell -ExecutionPolicy Bypass -File eng/scripts/validate-contracts.ps1
 
+  build-knowledge-map:
+    cmds:
+      - powershell -ExecutionPolicy Bypass -File eng/scripts/build-knowledge-map.ps1
+
   build:
     cmds:
       - .\.dotnet\dotnet.exe build SmartWarehouse.slnx

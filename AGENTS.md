@@ -9,6 +9,7 @@
 
 ## Где искать
 
+- `eng/knowledge-map/` — лёгкий индекс репозитория, exact-first поиск и связи между артефактами.
 - `docs/ArchitecturalVision.md` — архитектурные границы и инварианты.
 - `docs/Architecture-Baseline-Phase-1.md` — текущий базовый состав реализации.
 - `docs/ADR/` — принятые архитектурные решения.

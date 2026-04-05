@@ -12,3 +12,4 @@
 *.nupkg
 *.snupkg
 TestResults/
+eng/knowledge-map/build/

@@ -1,0 +1,226 @@
+schemaVersion: v0
+
+entities:
+  - id: entity.documentation-rules
+    kind: governance
+    canonical: documentation rules
+    aliases: [правила документации, writing rules]
+    tags: [documentation, glossary, language]
+    authoritativeArtifacts: [glossary, agent-guide]
+    relatedArtifacts: [repo-readme]
+
+  - id: entity.platform-core
+    kind: runtime-component
+    canonical: platform-core
+    aliases: [platform core, SmartWarehouse.PlatformCore]
+    tags: [dotnet, wes, wcs]
+    authoritativeArtifacts: [architecture-baseline-phase-1, adr-011-phase-1-technology-baseline]
+    relatedArtifacts: [project-smartwarehouse-platformcore-host, project-smartwarehouse-platformcore-application, project-smartwarehouse-platformcore-domain, project-smartwarehouse-platformcore-infrastructure, project-smartwarehouse-platformcore-dbmigrator]
+
+  - id: entity.simulation-host
+    kind: runtime-component
+    canonical: simulation-host
+    aliases: [simulation host, симулятор]
+    tags: [go, simulation, southbound]
+    authoritativeArtifacts: [repo-readme, adr-011-phase-1-technology-baseline]
+    relatedArtifacts: [simulation-host-module, simulation-host-main]
+
+  - id: entity.edge-integration-host
+    kind: runtime-component
+    canonical: edge-integration-host
+    aliases: [edge integration host]
+    tags: [acl, integration, placeholder]
+    authoritativeArtifacts: [repo-readme, adr-011-phase-1-technology-baseline]
+    relatedArtifacts: [edge-integration-host-readme]
+
+  - id: entity.digital-twin-ui
+    kind: runtime-component
+    canonical: digital-twin-ui
+    aliases: [digital twin ui, digital twin]
+    tags: [ui, react, placeholder]
+    authoritativeArtifacts: [repo-readme, adr-011-phase-1-technology-baseline]
+    relatedArtifacts: [digital-twin-ui-readme]
+
+  - id: entity.wes
+    kind: architectural-role
+    canonical: WES
+    aliases: [верхний контур, orchestration]
+    tags: [wes, planning, jobs]
+    authoritativeArtifacts: [architectural-vision, adr-003-wes-wcs-acl-authority-model]
+    relatedArtifacts: [domain-model-v0, adr-005-wes-planning-and-wcs-materialization, adr-008-internal-wes-wcs-application-contract-v0]
+
+  - id: entity.wcs
+    kind: architectural-role
+    canonical: WCS
+    aliases: [контур исполнения, execution core]
+    tags: [wcs, execution, runtime]
+    authoritativeArtifacts: [architectural-vision, adr-003-wes-wcs-acl-authority-model]
+    relatedArtifacts: [execution-semantics-v0, adr-005-wes-planning-and-wcs-materialization, adr-006-session-loss-recovery-and-reconciliation]
+
+  - id: entity.acl
+    kind: architectural-role
+    canonical: ACL
+    aliases: [anti-corruption layer, адаптерный слой изоляции]
+    tags: [acl, integration]
+    authoritativeArtifacts: [glossary, adr-003-wes-wcs-acl-authority-model]
+    relatedArtifacts: [architectural-vision, edge-integration-host-readme]
+
+  - id: entity.job
+    kind: domain-term
+    canonical: Job
+    aliases: [задание верхнего уровня, задание]
+    tags: [domain, wes]
+    authoritativeArtifacts: [glossary, domain-model-v0]
+    relatedArtifacts: [architectural-vision, northbound-api-v0]
+
+  - id: entity.execution-task
+    kind: domain-term
+    canonical: ExecutionTask
+    aliases: [исполнительная задача]
+    tags: [domain, execution, wcs]
+    authoritativeArtifacts: [glossary, domain-model-v0]
+    relatedArtifacts: [execution-semantics-v0, adr-005-wes-planning-and-wcs-materialization, adr-008-internal-wes-wcs-application-contract-v0]
+
+  - id: entity.payload
+    kind: domain-term
+    canonical: Payload
+    aliases: [грузовая единица]
+    tags: [domain, payload]
+    authoritativeArtifacts: [glossary, domain-model-v0]
+    relatedArtifacts: [northbound-api-v0, event-catalog-v0]
+
+  - id: entity.station-boundary
+    kind: domain-term
+    canonical: StationBoundary
+    aliases: [граница станции]
+    tags: [stations, handoff]
+    authoritativeArtifacts: [glossary, station-site-integration-v0]
+    relatedArtifacts: [architectural-vision, execution-semantics-v0]
+
+  - id: entity.device-session
+    kind: domain-term
+    canonical: DeviceSession
+    aliases: [сеанс устройства]
+    tags: [devices, liveness]
+    authoritativeArtifacts: [glossary, adr-006-session-loss-recovery-and-reconciliation]
+    relatedArtifacts: [event-catalog-v0, execution-semantics-v0]
+
+  - id: entity.northbound-api
+    kind: contract
+    canonical: Northbound API v0
+    aliases: [northbound api, верхний интеграционный интерфейс]
+    tags: [rest, webhook, integration]
+    authoritativeArtifacts: [northbound-api-v0, openapi-v0]
+    relatedArtifacts: [contract-acceptance-matrix-v0, architectural-vision]
+
+  - id: entity.southbound-contract
+    kind: contract
+    canonical: Southbound Contract v0
+    aliases: [southbound contract, нижний контракт]
+    tags: [asyncapi, schema, integration]
+    authoritativeArtifacts: [adr-004-canonical-southbound-contract-v0, asyncapi-v0]
+    relatedArtifacts: [event-catalog-v0, execution-semantics-v0]
+
+  - id: entity.application-contract
+    kind: contract
+    canonical: WES/WCS Application Contract v0
+    aliases: [application contract, внутренний прикладной контракт]
+    tags: [internal-contract, wes, wcs]
+    authoritativeArtifacts: [adr-008-internal-wes-wcs-application-contract-v0]
+    relatedArtifacts: [domain-model-v0, event-catalog-v0]
+
+  - id: entity.topology-configuration
+    kind: topology
+    canonical: Topology Configuration
+    aliases: [конфигурация топологии]
+    tags: [topology, configuration]
+    authoritativeArtifacts: [topology-configuration-model-v0]
+    relatedArtifacts: [topology-warehouse-a-nominal, topology-warehouse-a-no-route, adr-010-phase-1-runtime-topology]
+
+  - id: entity.runtime-topology
+    kind: topology
+    canonical: Runtime Topology
+    aliases: [топология исполнения]
+    tags: [topology, runtime, deployment]
+    authoritativeArtifacts: [adr-010-phase-1-runtime-topology]
+    relatedArtifacts: [local-compose, nats-local-config, otel-local-config]
+
+  - id: entity.outbox
+    kind: persistence
+    canonical: Outbox
+    aliases: [transactional outbox, таблица исходящей доставки]
+    tags: [persistence, integration]
+    authoritativeArtifacts: [glossary, adr-009-phase-1-persistence-and-event-publication-model]
+    relatedArtifacts: [architectural-vision]
+
+  - id: entity.inbox
+    kind: persistence
+    canonical: Inbox
+    aliases: [таблица входящей обработки]
+    tags: [persistence, idempotency]
+    authoritativeArtifacts: [glossary, adr-009-phase-1-persistence-and-event-publication-model]
+    relatedArtifacts: [architectural-vision]
+
+  - id: entity.event-journal
+    kind: persistence
+    canonical: Event Journal
+    aliases: [журнал платформенных событий]
+    tags: [events, audit, persistence]
+    authoritativeArtifacts: [glossary, adr-009-phase-1-persistence-and-event-publication-model]
+    relatedArtifacts: [event-catalog-v0]
+
+  - id: entity.postgresql
+    kind: technology
+    canonical: PostgreSQL
+    aliases: [postgres]
+    tags: [database, persistence]
+    authoritativeArtifacts: [adr-011-phase-1-technology-baseline, adr-009-phase-1-persistence-and-event-publication-model]
+    relatedArtifacts: [local-compose, global-dotnet-sdk]
+
+  - id: entity.nats-jetstream
+    kind: technology
+    canonical: NATS JetStream
+    aliases: [nats, jetstream]
+    tags: [broker, transport]
+    authoritativeArtifacts: [adr-011-phase-1-technology-baseline]
+    relatedArtifacts: [local-compose, nats-local-config]
+
+  - id: entity.dotnet-10
+    kind: technology
+    canonical: .NET 10
+    aliases: [dotnet 10, net10]
+    tags: [dotnet, csharp]
+    authoritativeArtifacts: [adr-011-phase-1-technology-baseline, global-dotnet-sdk]
+    relatedArtifacts: [project-smartwarehouse-platformcore-host, project-smartwarehouse-platformcore-application, project-smartwarehouse-platformcore-domain, project-smartwarehouse-platformcore-infrastructure, project-smartwarehouse-platformcore-dbmigrator]
+
+  - id: entity.open-telemetry
+    kind: technology
+    canonical: OpenTelemetry
+    aliases: [otel, observability]
+    tags: [telemetry, observability]
+    authoritativeArtifacts: [adr-011-phase-1-technology-baseline]
+    relatedArtifacts: [local-compose, otel-local-config]
+
+  - id: entity.node-reached
+    kind: event
+    canonical: NodeReached
+    aliases: [node reached]
+    tags: [event, southbound]
+    authoritativeArtifacts: [event-catalog-v0, schema-node-reached-message]
+    relatedArtifacts: [adr-004-canonical-southbound-contract-v0, execution-semantics-v0]
+
+  - id: entity.transfer-committed
+    kind: event
+    canonical: TransferCommitted
+    aliases: [transfer committed]
+    tags: [event, handoff]
+    authoritativeArtifacts: [event-catalog-v0, schema-transfer-committed-message]
+    relatedArtifacts: [execution-semantics-v0, station-site-integration-v0]
+
+  - id: entity.state-snapshot
+    kind: event
+    canonical: StateSnapshot
+    aliases: [state snapshot, снимок состояния]
+    tags: [event, recovery]
+    authoritativeArtifacts: [glossary, schema-state-snapshot-message]
+    relatedArtifacts: [adr-006-session-loss-recovery-and-reconciliation, event-catalog-v0]

@@ -2,6 +2,7 @@
   "name": "smartwarehouse-tooling",
   "private": true,
   "scripts": {
+    "build:knowledge-map": "node ./build-knowledge-map.mjs",
     "validate:openapi": "node ./validate-openapi.mjs",
     "validate:asyncapi": "spectral lint ../../docs/api/southbound/asyncapi-v0.yaml --ruleset ./spectral.yaml --fail-severity error",
     "validate:schemas": "node ./validate-schemas.mjs",
