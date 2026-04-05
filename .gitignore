@@ -1,3 +1,15 @@
+.dotnet/
+.vs/
+.vscode/
+.idea/
 **/.codex
 **/.tmp**
 **/AGENTS.md
+**/bin/
+**/obj/
+**/node_modules/
+*.user
+*.suo
+*.nupkg
+*.snupkg
+TestResults/

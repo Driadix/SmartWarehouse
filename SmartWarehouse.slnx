@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/platform-core/">
+    <Project Path="src/platform-core/SmartWarehouse.PlatformCore.Application/SmartWarehouse.PlatformCore.Application.csproj" />
+    <Project Path="src/platform-core/SmartWarehouse.PlatformCore.DbMigrator/SmartWarehouse.PlatformCore.DbMigrator.csproj" />
+    <Project Path="src/platform-core/SmartWarehouse.PlatformCore.Domain/SmartWarehouse.PlatformCore.Domain.csproj" />
+    <Project Path="src/platform-core/SmartWarehouse.PlatformCore.Host/SmartWarehouse.PlatformCore.Host.csproj" />
+    <Project Path="src/platform-core/SmartWarehouse.PlatformCore.Infrastructure/SmartWarehouse.PlatformCore.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SmartWarehouse.PlatformCore.ContractTests/SmartWarehouse.PlatformCore.ContractTests.csproj" />
+    <Project Path="tests/SmartWarehouse.PlatformCore.IntegrationTests/SmartWarehouse.PlatformCore.IntegrationTests.csproj" />
+    <Project Path="tests/SmartWarehouse.PlatformCore.UnitTests/SmartWarehouse.PlatformCore.UnitTests.csproj" />
+  </Folder>
+</Solution>

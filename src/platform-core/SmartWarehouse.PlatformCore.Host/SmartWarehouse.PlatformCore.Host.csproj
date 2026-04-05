@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SmartWarehouse.PlatformCore.Application\SmartWarehouse.PlatformCore.Application.csproj" />
+    <ProjectReference Include="..\SmartWarehouse.PlatformCore.Infrastructure\SmartWarehouse.PlatformCore.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>
