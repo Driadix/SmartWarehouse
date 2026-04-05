@@ -2,6 +2,9 @@
 .vs/
 .vscode/
 .idea/
+.env
+.env.local
+.env.*.local
 **/.codex
 **/.tmp**
 **/bin/
@@ -9,6 +12,7 @@
 **/node_modules/
 *.user
 *.suo
+*.exe
 *.nupkg
 *.snupkg
 TestResults/
