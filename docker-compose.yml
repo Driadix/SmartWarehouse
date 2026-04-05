@@ -1,0 +1,44 @@
+name: smartwarehouse-local
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: smartwarehouse-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-smartwarehouse}
+      POSTGRES_USER: ${POSTGRES_USER:-smartwarehouse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-smartwarehouse}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-smartwarehouse} -d ${POSTGRES_DB:-smartwarehouse}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  nats:
+    image: nats:2.11-alpine
+    container_name: smartwarehouse-nats
+    command: ["-js", "-c", "/etc/nats/nats-server.conf"]
+    ports:
+      - "${NATS_PORT:-4222}:4222"
+      - "${NATS_HTTP_PORT:-8222}:8222"
+    volumes:
+      - ./deploy/local/nats/nats-server.conf:/etc/nats/nats-server.conf:ro
+      - nats-data:/data
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.123.0
+    container_name: smartwarehouse-otel
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    ports:
+      - "${OTEL_OTLP_GRPC_PORT:-4317}:4317"
+      - "${OTEL_OTLP_HTTP_PORT:-4318}:4318"
+    volumes:
+      - ./deploy/local/otel/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+
+volumes:
+  postgres-data:
+  nats-data:

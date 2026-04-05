@@ -1,0 +1,30 @@
+version: '3'
+
+tasks:
+  bootstrap:
+    cmds:
+      - powershell -ExecutionPolicy Bypass -File eng/scripts/bootstrap.ps1
+
+  up:
+    cmds:
+      - powershell -ExecutionPolicy Bypass -File eng/scripts/dev-up.ps1
+
+  down:
+    cmds:
+      - powershell -ExecutionPolicy Bypass -File eng/scripts/dev-down.ps1
+
+  validate-contracts:
+    cmds:
+      - powershell -ExecutionPolicy Bypass -File eng/scripts/validate-contracts.ps1
+
+  build:
+    cmds:
+      - .\.dotnet\dotnet.exe build SmartWarehouse.slnx
+
+  test:
+    cmds:
+      - .\.dotnet\dotnet.exe test SmartWarehouse.slnx
+
+  test-e2e:
+    cmds:
+      - powershell -ExecutionPolicy Bypass -File eng/scripts/test-e2e.ps1
