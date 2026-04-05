@@ -1,6 +1,6 @@
 openapi: 3.2.0
 info:
-  title: SmartWarehouse: верхний интеграционный интерфейс v0
+  title: "SmartWarehouse: верхний интеграционный интерфейс v0"
   version: 0.1.0
   description: |
     Машиночитаемая спецификация внешнего интеграционного контракта текущего базового состава.
@@ -19,7 +19,7 @@ paths:
       tags:
         - Задания переноса грузовой единицы
       operationId: createPayloadTransferJob
-      summary: Создать `PayloadTransferJob`.
+      summary: "Создать `PayloadTransferJob`."
       description: |
         Принимает запрос на перенос грузовой единицы между двумя `endpointId`.
         Повторный запрос с тем же `clientOrderId` и тем же нормализованным телом возвращает уже существующее задание.
@@ -77,7 +77,7 @@ paths:
       tags:
         - Задания переноса грузовой единицы
       operationId: getPayloadTransferJobById
-      summary: Получить задание по `jobId`.
+      summary: "Получить задание по `jobId`."
       parameters:
         - $ref: '#/components/parameters/JobId'
       responses:
@@ -94,7 +94,7 @@ paths:
       tags:
         - Задания переноса грузовой единицы
       operationId: getPayloadTransferJobByClientOrderId
-      summary: Найти задание по `clientOrderId`.
+      summary: "Найти задание по `clientOrderId`."
       parameters:
         - $ref: '#/components/parameters/ClientOrderId'
       responses:
@@ -111,7 +111,7 @@ paths:
       tags:
         - Задания переноса грузовой единицы
       operationId: cancelPayloadTransferJob
-      summary: Запросить отмену задания.
+      summary: "Запросить отмену задания."
       description: |
         Отмена выполняется асинхронно.
         Если задание уже находится в `CANCELLED`, возвращается `200 OK`.
@@ -141,7 +141,7 @@ webhooks:
       tags:
         - Вебхуки
       operationId: receiveJobAcceptedWebhook
-      summary: `job.accepted`
+      summary: "`job.accepted`"
       description: |
         Исходящий вебхук платформы для внешней проекции `JobAccepted`.
         URL приёмника задаётся статической конфигурацией интеграции и не управляется через API `v0`.
@@ -181,7 +181,7 @@ webhooks:
       tags:
         - Вебхуки
       operationId: receiveJobStateChangedWebhook
-      summary: `job.state_changed`
+      summary: "`job.state_changed`"
       description: |
         Исходящий вебхук платформы для внешней проекции `JobStateChanged`.
         Доставка выполняется по модели «как минимум один раз»; получатель обязан дедуплицировать события по `eventId`.

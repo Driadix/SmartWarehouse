@@ -1,0 +1,9 @@
+extends:
+  - spectral:oas
+  - spectral:asyncapi
+
+rules:
+  info-contact: off
+  license-url: off
+  operation-description: off
+  operation-tags: off

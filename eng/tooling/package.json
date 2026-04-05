@@ -1,0 +1,17 @@
+{
+  "name": "smartwarehouse-tooling",
+  "private": true,
+  "scripts": {
+    "validate:openapi": "node ./validate-openapi.mjs",
+    "validate:asyncapi": "spectral lint ../../docs/api/southbound/asyncapi-v0.yaml --ruleset ./spectral.yaml --fail-severity error",
+    "validate:schemas": "node ./validate-schemas.mjs",
+    "validate:contracts": "npm run validate:openapi && npm run validate:asyncapi && npm run validate:schemas"
+  },
+  "devDependencies": {
+    "@apidevtools/swagger-parser": "^12.1.0",
+    "@stoplight/spectral-cli": "^6.15.0",
+    "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1",
+    "yaml": "^2.8.3"
+  }
+}
