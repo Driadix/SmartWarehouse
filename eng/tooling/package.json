@@ -3,8 +3,10 @@
   "private": true,
   "scripts": {
     "build:knowledge-map": "node ./build-knowledge-map.mjs",
-    "validate:openapi": "node ./validate-openapi.mjs",
-    "validate:asyncapi": "spectral lint ../../docs/api/southbound/asyncapi-v0.yaml --ruleset ./spectral.yaml --fail-severity error",
+    "validate:openapi:semantic": "node ./validate-openapi.mjs",
+    "validate:openapi:lint": "spectral lint ../../docs/api/northbound/openapi-v0.yaml --ruleset ./spectral.yaml --fail-severity warn",
+    "validate:openapi": "npm run validate:openapi:semantic && npm run validate:openapi:lint",
+    "validate:asyncapi": "spectral lint ../../docs/api/southbound/asyncapi-v0.yaml --ruleset ./spectral.yaml --fail-severity warn",
     "validate:schemas": "node ./validate-schemas.mjs",
     "validate:contracts": "npm run validate:openapi && npm run validate:asyncapi && npm run validate:schemas"
   },

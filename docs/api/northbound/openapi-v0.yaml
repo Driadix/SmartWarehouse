@@ -1,4 +1,4 @@
-openapi: 3.2.0
+openapi: 3.1.2
 info:
   title: "SmartWarehouse: верхний интеграционный интерфейс v0"
   version: 0.1.0
@@ -8,6 +8,9 @@ info:
     Входящий поток реализуется через `REST`, исходящий поток - через статически настроенные вебхуки.
     Выбор конкретного профиля аутентификации, URL приёмников вебхуков и сетевого доступа остаётся профилем развёртывания и не нормируется `v0`.
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+servers:
+  - url: https://example.invalid
+    description: Базовый URL задаётся профилем развёртывания; в машиночитаемой спецификации используется нейтральный placeholder.
 tags:
   - name: Задания переноса грузовой единицы
     description: Входящий контракт постановки и чтения задания на перенос грузовой единицы.
@@ -54,6 +57,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PayloadTransferJob'
+              examples:
+                accepted:
+                  value:
+                    jobId: job-01
+                    clientOrderId: WMS-12345
+                    state: ACCEPTED
+                    sourceEndpointId: inbound.main
+                    targetEndpointId: outbound.main
+                    priority: NORMAL
+                    payloadRef:
+                      clientPayloadId: SSCC-001
+                    attributes:
+                      batchId: BATCH-01
+                    createdAt: '2026-04-04T09:30:00Z'
+                    updatedAt: '2026-04-04T09:30:00Z'
         '200':
           description: Идемпотентный повтор уже принятого эквивалентного запроса.
           headers:
@@ -66,6 +84,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PayloadTransferJob'
+              examples:
+                idempotentRepeat:
+                  value:
+                    jobId: job-01
+                    clientOrderId: WMS-12345
+                    state: ACCEPTED
+                    sourceEndpointId: inbound.main
+                    targetEndpointId: outbound.main
+                    priority: NORMAL
+                    payloadRef:
+                      clientPayloadId: SSCC-001
+                    attributes:
+                      batchId: BATCH-01
+                    createdAt: '2026-04-04T09:30:00Z'
+                    updatedAt: '2026-04-04T09:30:00Z'
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
@@ -248,18 +281,56 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Problem'
+          examples:
+            jobNotFound:
+              value:
+                code: JOB_NOT_FOUND
+                title: Задание не найдено
+                detail: Задание с указанным идентификатором отсутствует.
     Conflict:
       description: Конфликт идемпотентности или недопустимый переход состояния.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Problem'
+          examples:
+            idempotencyConflict:
+              value:
+                code: IDEMPOTENCY_CONFLICT
+                title: Конфликт идемпотентности
+                detail: "Запрос с тем же `clientOrderId` уже существует, но нормализованное тело отличается."
+            cancelNotAllowed:
+              value:
+                code: CANCEL_NOT_ALLOWED
+                title: Отмена недопустима
+                detail: Задание уже находится в терминальном состоянии, в котором отмена не разрешена.
     UnprocessableEntity:
       description: Запрос синтаксически корректен, но нарушает бизнес-ограничения `v0`.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Problem'
+          examples:
+            unknownSourceEndpoint:
+              value:
+                code: UNKNOWN_SOURCE_ENDPOINT
+                title: Неизвестная исходная конечная точка
+                detail: "`sourceEndpointId` отсутствует в текущей конфигурации топологии."
+            unknownTargetEndpoint:
+              value:
+                code: UNKNOWN_TARGET_ENDPOINT
+                title: Неизвестная целевая конечная точка
+                detail: "`targetEndpointId` отсутствует в текущей конфигурации топологии."
+            identicalEndpoints:
+              value:
+                code: IDENTICAL_ENDPOINTS
+                title: Совпадающие конечные точки
+                detail: "`sourceEndpointId` и `targetEndpointId` не должны совпадать."
+            noAdmissibleRoute:
+              value:
+                code: NO_ADMISSIBLE_ROUTE
+                title: Нет допустимого маршрута
+                detail: Между валидными конечными точками отсутствует допустимый маршрут в текущей топологии.
   schemas:
     CreatePayloadTransferJobRequest:
       type: object

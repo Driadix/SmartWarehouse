@@ -8,7 +8,23 @@ info:
     Платформа публикует команды и принимает события устройств.
     Спецификация синхронизирована с `ADR-004` и фиксирует полный минимальный набор
     общих команд, команд семейств ресурсов и событий устройств текущего `v0`.
+  contact:
+    name: SmartWarehouse maintainers
+    url: https://example.invalid
+    email: maintainers@example.invalid
+  license:
+    name: Proprietary
+  tags:
+    - name: southbound-command
+      description: Команды, которые `WCS` публикует в нижний контур.
+    - name: southbound-event
+      description: События устройств и адаптеров, которые `WCS` принимает из нижнего контура.
 defaultContentType: application/json
+servers:
+  localNats:
+    host: localhost:4222
+    protocol: nats
+    description: Локальная транспортная привязка `NATS` / `JetStream` для базового окружения разработки.
 channels:
   requestStateSnapshotCommand:
     address: southbound.command.requestStateSnapshot
@@ -138,150 +154,175 @@ channels:
 operations:
   sendRequestStateSnapshot:
     action: send
+    description: Запросить у устройства или адаптера актуальный `StateSnapshot` для повторного согласования состояния.
     channel:
       $ref: '#/channels/requestStateSnapshotCommand'
     messages:
       - $ref: '#/channels/requestStateSnapshotCommand/messages/requestStateSnapshot'
   sendSuspendExecution:
     action: send
+    description: Приостановить активное исполнение на стороне устройства или адаптера.
     channel:
       $ref: '#/channels/suspendExecutionCommand'
     messages:
       - $ref: '#/channels/suspendExecutionCommand/messages/suspendExecution'
   sendResumeExecution:
     action: send
+    description: Возобновить ранее приостановленное исполнение после повторного согласования.
     channel:
       $ref: '#/channels/resumeExecutionCommand'
     messages:
       - $ref: '#/channels/resumeExecutionCommand/messages/resumeExecution'
   sendClearFault:
     action: send
+    description: Запросить очистку ранее зафиксированного отказа на стороне нижнего контура.
     channel:
       $ref: '#/channels/clearFaultCommand'
     messages:
       - $ref: '#/channels/clearFaultCommand/messages/clearFault'
   sendAcknowledgeAlarm:
     action: send
+    description: Подтвердить получение тревоги или аларма, требующего операторского подтверждения.
     channel:
       $ref: '#/channels/acknowledgeAlarmCommand'
     messages:
       - $ref: '#/channels/acknowledgeAlarmCommand/messages/acknowledgeAlarm'
   sendGrantMotionWindow:
     action: send
+    description: Выдать `Shuttle3D` разрешённое окно движения до следующей конфликтной точки.
     channel:
       $ref: '#/channels/grantMotionWindowCommand'
     messages:
       - $ref: '#/channels/grantMotionWindowCommand/messages/grantMotionWindow'
   sendRevokeMotionWindow:
     action: send
+    description: Отозвать ранее выданное окно движения для `Shuttle3D`.
     channel:
       $ref: '#/channels/revokeMotionWindowCommand'
     messages:
       - $ref: '#/channels/revokeMotionWindowCommand/messages/revokeMotionWindow'
   sendPrepareTransfer:
     action: send
+    description: Перевести участников операции передачи в состояние подготовки к фиксации.
     channel:
       $ref: '#/channels/prepareTransferCommand'
     messages:
       - $ref: '#/channels/prepareTransferCommand/messages/prepareTransfer'
   sendCommitTransfer:
     action: send
+    description: Зафиксировать ранее подготовленную операцию передачи.
     channel:
       $ref: '#/channels/commitTransferCommand'
     messages:
       - $ref: '#/channels/commitTransferCommand/messages/commitTransfer'
   sendAbortTransfer:
     action: send
+    description: Прервать операцию передачи, если она не может быть завершена корректно.
     channel:
       $ref: '#/channels/abortTransferCommand'
     messages:
       - $ref: '#/channels/abortTransferCommand/messages/abortTransfer'
   sendExecuteAction:
     action: send
+    description: Выполнить атомарное действие устройства без свободного перемещения по графу.
     channel:
       $ref: '#/channels/executeActionCommand'
     messages:
       - $ref: '#/channels/executeActionCommand/messages/executeAction'
   sendMoveCarrier:
     action: send
+    description: Переместить `HybridLift` к целевой точке перевозки.
     channel:
       $ref: '#/channels/moveCarrierCommand'
     messages:
       - $ref: '#/channels/moveCarrierCommand/messages/moveCarrier'
   receiveHeartbeat:
     action: receive
+    description: Принять сигнал доступности, подтверждающий активность устройства и его сеанса.
     channel:
       $ref: '#/channels/heartbeatEvent'
     messages:
       - $ref: '#/channels/heartbeatEvent/messages/heartbeat'
   receiveStateSnapshot:
     action: receive
+    description: Принять снимок состояния устройства или адаптера для восстановления и повторного согласования.
     channel:
       $ref: '#/channels/stateSnapshotEvent'
     messages:
       - $ref: '#/channels/stateSnapshotEvent/messages/stateSnapshot'
   receiveCapabilityReported:
     action: receive
+    description: Принять первичное сообщение о статических и активных возможностях ресурса.
     channel:
       $ref: '#/channels/capabilityReportedEvent'
     messages:
       - $ref: '#/channels/capabilityReportedEvent/messages/capabilityReported'
   receiveCapabilityChanged:
     action: receive
+    description: Принять изменение возможностей ресурса во время работы системы.
     channel:
       $ref: '#/channels/capabilityChangedEvent'
     messages:
       - $ref: '#/channels/capabilityChangedEvent/messages/capabilityChanged'
   receiveNodeReached:
     action: receive
+    description: Принять подтверждённый факт достижения топологического узла.
     channel:
       $ref: '#/channels/nodeReachedEvent'
     messages:
       - $ref: '#/channels/nodeReachedEvent/messages/nodeReached'
   receiveMotionWindowProgress:
     action: receive
+    description: Принять прогресс движения внутри ранее выданного окна.
     channel:
       $ref: '#/channels/motionWindowProgressEvent'
     messages:
       - $ref: '#/channels/motionWindowProgressEvent/messages/motionWindowProgress'
   receiveTransferReady:
     action: receive
+    description: Принять сигнал готовности участника к выполнению операции передачи.
     channel:
       $ref: '#/channels/transferReadyEvent'
     messages:
       - $ref: '#/channels/transferReadyEvent/messages/transferReady'
   receiveTransferCommitted:
     action: receive
+    description: Принять подтверждённый факт фиксации операции передачи.
     channel:
       $ref: '#/channels/transferCommittedEvent'
     messages:
       - $ref: '#/channels/transferCommittedEvent/messages/transferCommitted'
   receiveTransferAborted:
     action: receive
+    description: Принять подтверждённый факт прерывания операции передачи.
     channel:
       $ref: '#/channels/transferAbortedEvent'
     messages:
       - $ref: '#/channels/transferAbortedEvent/messages/transferAborted'
   receiveActionCompleted:
     action: receive
+    description: Принять подтверждение успешного завершения атомарного действия устройства.
     channel:
       $ref: '#/channels/actionCompletedEvent'
     messages:
       - $ref: '#/channels/actionCompletedEvent/messages/actionCompleted'
   receiveFaultRaised:
     action: receive
+    description: Принять сообщение о новом отказе или деградации ресурса.
     channel:
       $ref: '#/channels/faultRaisedEvent'
     messages:
       - $ref: '#/channels/faultRaisedEvent/messages/faultRaised'
   receiveFaultCleared:
     action: receive
+    description: Принять сообщение об устранении ранее поднятого отказа.
     channel:
       $ref: '#/channels/faultClearedEvent'
     messages:
       - $ref: '#/channels/faultClearedEvent/messages/faultCleared'
   receiveExecutionRejected:
     action: receive
+    description: Принять отказ нижнего контура от выполнения запрошенного действия или шага.
     channel:
       $ref: '#/channels/executionRejectedEvent'
     messages:

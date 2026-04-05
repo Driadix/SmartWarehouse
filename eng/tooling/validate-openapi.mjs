@@ -3,16 +3,6 @@ import SwaggerParser from '@apidevtools/swagger-parser';
 import YAML from 'yaml';
 
 const target = '../../docs/api/northbound/openapi-v0.yaml';
-const supportedVersions = new Set([
-  '3.1.0',
-  '3.1.1',
-  '3.1.2',
-  '3.0.0',
-  '3.0.1',
-  '3.0.2',
-  '3.0.3',
-  '3.0.4'
-]);
 
 function assertShape(document) {
   if (!document || typeof document !== 'object') {
@@ -47,14 +37,8 @@ try {
   const document = parsed.toJS();
   assertShape(document);
 
-  if (supportedVersions.has(document.openapi)) {
-    await SwaggerParser.validate(target);
-    console.log(`OpenAPI validation passed: ${target}`);
-  } else {
-    console.log(
-      `OpenAPI syntax and shape validation passed: ${target}. Semantic validation is skipped for unsupported version ${document.openapi}.`
-    );
-  }
+  await SwaggerParser.validate(target);
+  console.log(`OpenAPI validation passed: ${target}`);
 } catch (error) {
   console.error(`OpenAPI validation failed: ${target}`);
   console.error(error.message);
