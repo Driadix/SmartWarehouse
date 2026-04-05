@@ -6,13 +6,13 @@ namespace SmartWarehouse.PlatformCore.Host.Controllers;
 [Route("api/health")]
 public sealed class HealthController : ControllerBase
 {
-    [HttpGet]
-    public IActionResult Get()
+  [HttpGet]
+  public IActionResult Get()
+  {
+    return Ok(new
     {
-        return Ok(new
-        {
-            status = "ok",
-            service = "platform-core"
-        });
-    }
+      status = "ok",
+      service = "platform-core"
+    });
+  }
 }

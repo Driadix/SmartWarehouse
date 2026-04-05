@@ -1,9 +1,9 @@
-﻿namespace SmartWarehouse.PlatformCore.DbMigrator;
+namespace SmartWarehouse.PlatformCore.DbMigrator;
 
-class Program
+sealed class Program
 {
-    static void Main(string[] args)
-    {
-        Console.WriteLine("Hello, World!");
-    }
+  static void Main(string[] args)
+  {
+    Console.WriteLine("Hello, World!");
+  }
 }

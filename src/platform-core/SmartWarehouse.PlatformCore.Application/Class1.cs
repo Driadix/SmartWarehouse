@@ -1,4 +1,4 @@
-﻿namespace SmartWarehouse.PlatformCore.Application;
+namespace SmartWarehouse.PlatformCore.Application;
 
 public class Class1
 {

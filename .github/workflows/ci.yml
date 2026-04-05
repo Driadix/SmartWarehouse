@@ -2,9 +2,13 @@ name: CI
 
 on:
   pull_request:
+    paths-ignore:
+      - docs/Standards/**
   push:
     branches:
       - main
+    paths-ignore:
+      - docs/Standards/**
   workflow_dispatch:
 
 permissions:
@@ -24,6 +28,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /**
+            !/docs/Standards
+            !/docs/Standards/**
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -44,6 +54,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /**
+            !/docs/Standards
+            !/docs/Standards/**
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
@@ -52,6 +68,9 @@ jobs:
 
       - name: Restore
         run: dotnet restore SmartWarehouse.slnx
+
+      - name: Verify formatting
+        run: dotnet format SmartWarehouse.slnx --verify-no-changes --no-restore
 
       - name: Build
         run: dotnet build SmartWarehouse.slnx --configuration Release --no-restore
@@ -68,11 +87,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /**
+            !/docs/Standards
+            !/docs/Standards/**
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version-file: src/simulation-host/go.mod
+
+      - name: Verify formatting
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
 
       - name: Build
         run: go build ./...
@@ -86,6 +122,33 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /**
+            !/docs/Standards
+            !/docs/Standards/**
 
       - name: Validate compose file
         run: docker compose --env-file .env.example config
+
+  secrets:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /**
+            !/docs/Standards
+            !/docs/Standards/**
+
+      - name: Run gitleaks
+        run: >
+          docker run --rm
+          -v "$PWD:/repo"
+          -w /repo
+          ghcr.io/gitleaks/gitleaks:v8.30.1
+          detect --source . --no-git --config gitleaks.toml --redact

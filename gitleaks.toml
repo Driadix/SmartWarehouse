@@ -1,0 +1,10 @@
+title = "SmartWarehouse gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Ignore large standards reference files."
+paths = [
+  '''(^|/)docs/Standards/.*$'''
+]

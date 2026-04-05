@@ -1,4 +1,4 @@
-﻿namespace SmartWarehouse.PlatformCore.Domain;
+namespace SmartWarehouse.PlatformCore.Domain;
 
 public class Class1
 {
