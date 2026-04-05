@@ -1,0 +1,136 @@
+topologyId: WH-A
+version: 1
+
+levels:
+  - levelId: L1
+    ordinal: 1
+  - levelId: L2
+    ordinal: 2
+
+nodes:
+  - nodeId: L1_TRAVEL_001
+    nodeType: TravelNode
+    levelId: L1
+    tags: []
+  - nodeId: L1_SWITCH_A
+    nodeType: SwitchNode
+    levelId: L1
+    tags: []
+  - nodeId: L1_TP_LIFT_A
+    nodeType: TransferPoint
+    levelId: L1
+    shaftId: LIFT_A
+    tags: []
+  - nodeId: L1_CARRIER_A
+    nodeType: CarrierNode
+    levelId: L1
+    shaftId: LIFT_A
+    tags: []
+  - nodeId: L1_LOAD_01
+    nodeType: StationNode
+    levelId: L1
+    stationId: LOAD_01
+    tags: []
+  - nodeId: L2_TP_LIFT_A
+    nodeType: TransferPoint
+    levelId: L2
+    shaftId: LIFT_A
+    tags: []
+  - nodeId: L2_CARRIER_A
+    nodeType: CarrierNode
+    levelId: L2
+    shaftId: LIFT_A
+    tags: []
+  - nodeId: L2_UNLOAD_01
+    nodeType: StationNode
+    levelId: L2
+    stationId: UNLOAD_01
+    tags: []
+  - nodeId: L2_CHARGE_01
+    nodeType: ChargeNode
+    levelId: L2
+    servicePointId: CHARGE_01
+    tags: []
+
+edges:
+  - edgeId: E1
+    fromNodeId: L1_LOAD_01
+    toNodeId: L1_TRAVEL_001
+    traversalMode: OPEN
+    weight: 1
+  - edgeId: E2
+    fromNodeId: L1_TRAVEL_001
+    toNodeId: L1_SWITCH_A
+    traversalMode: OPEN
+    weight: 1
+  - edgeId: E3
+    fromNodeId: L1_SWITCH_A
+    toNodeId: L1_TP_LIFT_A
+    traversalMode: OPEN
+    weight: 1
+  - edgeId: E4
+    fromNodeId: L1_CARRIER_A
+    toNodeId: L2_CARRIER_A
+    traversalMode: CARRIER_ONLY
+    weight: 1
+  - edgeId: E5
+    fromNodeId: L2_TP_LIFT_A
+    toNodeId: L2_UNLOAD_01
+    traversalMode: OPEN
+    weight: 1
+  - edgeId: E6
+    fromNodeId: L2_TP_LIFT_A
+    toNodeId: L2_CHARGE_01
+    traversalMode: OPEN
+    weight: 1
+
+shafts:
+  - shaftId: LIFT_A
+    carrierDeviceId: LIFT_A_DEVICE
+    slotCount: 1
+    stops:
+      - levelId: L1
+        carrierNodeId: L1_CARRIER_A
+        transferPointId: L1_TP_LIFT_A
+      - levelId: L2
+        carrierNodeId: L2_CARRIER_A
+        transferPointId: L2_TP_LIFT_A
+
+stations:
+  - stationId: LOAD_01
+    stationType: LOAD
+    controlMode: PASSIVE
+    attachedNodeId: L1_LOAD_01
+    bufferCapacity: 1
+  - stationId: UNLOAD_01
+    stationType: UNLOAD
+    controlMode: PASSIVE
+    attachedNodeId: L2_UNLOAD_01
+    bufferCapacity: 1
+
+servicePoints:
+  - servicePointId: CHARGE_01
+    servicePointType: CHARGE
+    nodeId: L2_CHARGE_01
+    passiveSemantics: ARRIVAL_CONFIRMS_ENGAGEMENT
+
+deviceBindings:
+  - deviceId: SHUTTLE_01
+    family: Shuttle3D
+    initialNodeId: L1_TRAVEL_001
+    homeNodeId: L1_TRAVEL_001
+  - deviceId: LIFT_A_DEVICE
+    family: HybridLift
+    shaftId: LIFT_A
+    initialNodeId: L1_CARRIER_A
+
+endpointMappings:
+  - endpointId: inbound.main
+    endpointKind: LOAD_STATION
+    stationId: LOAD_01
+  - endpointId: outbound.main
+    endpointKind: UNLOAD_STATION
+    stationId: UNLOAD_01
+  - endpointId: charge.l2.a
+    endpointKind: CHARGE_POINT
+    servicePointId: CHARGE_01

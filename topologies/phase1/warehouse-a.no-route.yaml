@@ -1,0 +1,61 @@
+topologyId: WH-A-NO-ROUTE
+version: 1
+
+levels:
+  - levelId: L1
+    ordinal: 1
+  - levelId: L2
+    ordinal: 2
+
+nodes:
+  - nodeId: L1_LOAD_01
+    nodeType: StationNode
+    levelId: L1
+    stationId: LOAD_01
+    tags: []
+  - nodeId: L1_TRAVEL_001
+    nodeType: TravelNode
+    levelId: L1
+    tags: []
+  - nodeId: L2_UNLOAD_01
+    nodeType: StationNode
+    levelId: L2
+    stationId: UNLOAD_01
+    tags: []
+
+edges:
+  - edgeId: E1
+    fromNodeId: L1_LOAD_01
+    toNodeId: L1_TRAVEL_001
+    traversalMode: OPEN
+    weight: 1
+
+shafts: []
+
+stations:
+  - stationId: LOAD_01
+    stationType: LOAD
+    controlMode: PASSIVE
+    attachedNodeId: L1_LOAD_01
+    bufferCapacity: 1
+  - stationId: UNLOAD_01
+    stationType: UNLOAD
+    controlMode: PASSIVE
+    attachedNodeId: L2_UNLOAD_01
+    bufferCapacity: 1
+
+servicePoints: []
+
+deviceBindings:
+  - deviceId: SHUTTLE_01
+    family: Shuttle3D
+    initialNodeId: L1_TRAVEL_001
+    homeNodeId: L1_TRAVEL_001
+
+endpointMappings:
+  - endpointId: inbound.main
+    endpointKind: LOAD_STATION
+    stationId: LOAD_01
+  - endpointId: outbound.main
+    endpointKind: UNLOAD_STATION
+    stationId: UNLOAD_01
