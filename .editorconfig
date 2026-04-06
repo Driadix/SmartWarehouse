@@ -16,3 +16,6 @@ indent_style = tab
 
 [Makefile]
 indent_style = tab
+
+[src/platform-core/SmartWarehouse.PlatformCore.Infrastructure/Persistence/Migrations/*.cs]
+generated_code = true

@@ -57,6 +57,16 @@ public sealed class PlatformCoreDbContextModelTests
     Assert.NotNull(context);
   }
 
+  [Fact]
+  public void PlatformCoreDbContextExposesInitialMigration()
+  {
+    using var context = CreateContext();
+
+    Assert.Contains(
+        context.Database.GetMigrations(),
+        migrationId => migrationId.EndsWith("_InitialPlatformCoreSchema", StringComparison.Ordinal));
+  }
+
   private static PlatformCoreDbContext CreateContext()
   {
     var options = new DbContextOptionsBuilder<PlatformCoreDbContext>()
