@@ -115,6 +115,14 @@ artifacts:
     tags: [baseline, phase1, implementation]
     sourceOfTruthFor: [phase1-baseline]
 
+  - id: implementation-backlog-phase-1
+    kind: implementation-backlog
+    path: docs/Implementation-Backlog-Phase-1.md
+    authority: 78
+    aliases: [implementation backlog, phase 1 backlog, backlog]
+    tags: [backlog, implementation, phase1, planning]
+    sourceOfTruthFor: [implementation-backlog]
+
   - id: capability-catalog-phase-1
     kind: catalog
     path: docs/Capability-Catalog-Phase-1.md

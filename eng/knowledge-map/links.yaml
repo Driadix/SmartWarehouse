@@ -17,6 +17,18 @@ links:
     to: architectural-vision
     relation: elaborates
 
+  - from: architectural-vision
+    to: implementation-backlog-phase-1
+    relation: drives
+
+  - from: architecture-baseline-phase-1
+    to: implementation-backlog-phase-1
+    relation: drives
+
+  - from: contract-acceptance-matrix-v0
+    to: implementation-backlog-phase-1
+    relation: informs
+
   - from: adr-011-phase-1-technology-baseline
     to: architectural-vision
     relation: elaborates
