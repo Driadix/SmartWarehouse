@@ -5,6 +5,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using SmartWarehouse.PlatformCore.Host.HealthChecks;
+using SmartWarehouse.PlatformCore.Infrastructure.Persistence;
 
 namespace SmartWarehouse.PlatformCore.Host;
 
@@ -18,8 +19,11 @@ public class Program
     var otlpEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
     var serviceName = builder.Configuration["OTEL_SERVICE_NAME"] ?? "platform-core";
     var serviceVersion = typeof(Program).Assembly.GetName().Version?.ToString() ?? "0.1.0-dev";
+    var platformCoreConnectionString = builder.Configuration.GetConnectionString("PlatformCore")
+        ?? throw new InvalidOperationException("Connection string 'PlatformCore' is required.");
 
     builder.Services.AddControllers();
+    builder.Services.AddPlatformCorePersistence(platformCoreConnectionString);
 
     builder.Logging.AddOpenTelemetry(options =>
     {

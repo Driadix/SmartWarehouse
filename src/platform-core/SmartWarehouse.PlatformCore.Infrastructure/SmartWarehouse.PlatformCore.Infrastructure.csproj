@@ -1,6 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <ProjectReference Include="..\SmartWarehouse.PlatformCore.Domain\SmartWarehouse.PlatformCore.Domain.csproj" />
     <ProjectReference Include="..\SmartWarehouse.PlatformCore.Application\SmartWarehouse.PlatformCore.Application.csproj" />
   </ItemGroup>

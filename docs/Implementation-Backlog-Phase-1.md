@@ -49,7 +49,7 @@
 | `status` | `BACKLOG` |
 | `startedAt` | — |
 | `owner` | — |
-| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-005`. |
+| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-006`. |
 
 ---
 
@@ -67,6 +67,7 @@
 | 2026-04-06 | `P1-002` | Развёрнут модульный каркас `SmartWarehouse.PlatformCore.Application` и `SmartWarehouse.PlatformCore.Infrastructure`: добавлены реальные модули `Contracts`, `Northbound`, `Topology`, `Wes`, `Wcs`, `Messaging`, `Persistence`, `Projections`. | `Class1.cs` и `.gitkeep` удалены, структура проектов теперь явно отражает логические контуры модульного монолита фазы 1; добавлены каталоги модулей и unit-тест, проверяющий состав и границы модулей. |
 | 2026-04-06 | `P1-003` | В модуле `platform-core/contracts` введён общий контрактный envelope и базовая иерархия прикладных команд и событий. | Появились `ContractEnvelope`, типизированные идентификаторы `EnvelopeId` и `CausationId`, версия контракта `ApplicationContractVersion`, базовые типы `ApplicationCommand` / `ApplicationEvent`, а также первые команды `SubmitExecutionTask` и `CancelExecutionTask`; общая метаинформация согласована с `ADR-008`, `ADR-009` и `Event-Catalog-v0`, а инварианты закреплены unit-тестами. |
 | 2026-04-06 | `P1-004` | Реализована внутрипроцессная command bus для `SubmitExecutionTask` / `CancelExecutionTask`, WES-side gateway и базовая диспетчеризация обработчиков `WCS`. | В `Application` появились `IApplicationCommandBus`, generic-обработчики команд, DI-регистрация поверх built-in контейнера `.NET`, `IWesExecutionTaskCommandGateway` и `IWcsExecutionTaskCommandProcessor`; unit-тесты подтверждают передачу шага `WES -> WCS` без общей записи в чужие таблицы, а также корректную ошибку при отсутствии или конфликте обработчиков. |
+| 2026-04-06 | `P1-005` | Поднят `PlatformCoreDbContext` и введена модель хранения по схемам `config`, `wes`, `wcs`, `integration`, `projection`, `audit`. | В `Infrastructure.Persistence` появились `PlatformCoreDbContext`, DI-регистрация `AddPlatformCorePersistence`, отдельные persistence-типы для write-model, projection и audit, а также schema-aware EF Core mapping под таблицы из `ADR-009`; `Host` получил подключение `DbContext` через `AddDbContext`, а unit-тесты подтверждают наличие всех шести схем и ключевых таблиц в модели. |
 
 ---
 
@@ -96,7 +97,7 @@
 
 | TaskId | Контур | Задача | Статус | Зависит от | Критерий готовности |
 |---|---|---|---|---|---|
-| `P1-005` | `platform-core/persistence` | Поднять `DbContext` и физически разнести схемы `config`, `wes`, `wcs`, `integration`, `projection`, `audit`. | `BACKLOG` | `P1-001`, `P1-002` | Схемы БД и базовые агрегаты отражены в модели хранения. |
+| `P1-005` | `platform-core/persistence` | Поднять `DbContext` и физически разнести схемы `config`, `wes`, `wcs`, `integration`, `projection`, `audit`. | `DONE` | `P1-001`, `P1-002` | Схемы БД и базовые агрегаты отражены в модели хранения. |
 | `P1-006` | `platform-core/persistence` | Создать первую миграцию БД, включая `outbox`, `inbox`, `northbound_idempotency`, `webhook_deliveries`, `platform_event_journal`. | `BACKLOG` | `P1-005` | Миграция создаёт минимальную рабочую схему фазы 1. |
 | `P1-007` | `db-migrator` | Реализовать рабочий `DbMigrator` вместо заглушки. | `BACKLOG` | `P1-006` | Контейнер мигратора применяет миграции и завершает работу с корректным кодом возврата. |
 | `P1-008` | `tests/integration` | Поднять общий `Testcontainers` harness для `PostgreSQL` и `NATS JetStream`. | `BACKLOG` | `P1-006` | Интеграционные тесты могут запускать реальные зависимости без локальной ручной подготовки. |
