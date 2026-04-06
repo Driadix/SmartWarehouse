@@ -269,6 +269,14 @@ public sealed class WarehouseTopologyConfigValidator : IWarehouseTopologyConfigV
         errors.Add(new TopologyValidationError(
             TopologyValidationErrorCode.InvalidCarrierNodeTraversalEdge,
             $"Edge '{edge.EdgeId}' cannot connect the level graph directly to a CarrierNode."));
+        continue;
+      }
+
+      if (fromNode.LevelId != toNode.LevelId)
+      {
+        errors.Add(new TopologyValidationError(
+            TopologyValidationErrorCode.InvalidCrossLevelTraversalEdge,
+            $"Edge '{edge.EdgeId}' must stay within a single level unless it is a CARRIER_ONLY edge inside a shaft."));
       }
     }
   }

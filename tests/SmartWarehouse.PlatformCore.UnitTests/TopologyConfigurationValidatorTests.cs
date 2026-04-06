@@ -189,6 +189,42 @@ public sealed class TopologyConfigurationValidatorTests
     Assert.Contains(errors, static error => error.Code == TopologyValidationErrorCode.DuplicateCarrierNodeLevel);
   }
 
+  [Theory]
+  [InlineData("OPEN")]
+  [InlineData("RESTRICTED")]
+  public void ValidatorRejectsNonCarrierEdgeCrossingLevels(string traversalModeLiteral)
+  {
+    var errors = Validate(
+        $$"""
+        topologyId: INVALID-CROSS-LEVEL-EDGE
+        version: 1
+        levels:
+          - levelId: L1
+            ordinal: 1
+          - levelId: L2
+            ordinal: 2
+        nodes:
+          - nodeId: TRAVEL_L1
+            nodeType: TravelNode
+            levelId: L1
+          - nodeId: TRAVEL_L2
+            nodeType: TravelNode
+            levelId: L2
+        edges:
+          - edgeId: E1
+            fromNodeId: TRAVEL_L1
+            toNodeId: TRAVEL_L2
+            traversalMode: {{traversalModeLiteral}}
+            weight: 1
+        """);
+
+    var error = Assert.Single(
+        errors,
+        static candidate => candidate.Code == TopologyValidationErrorCode.InvalidCrossLevelTraversalEdge);
+
+    Assert.Contains("E1", error.Message, StringComparison.Ordinal);
+  }
+
   [Fact]
   public void ValidatorRejectsCarrierNodeWithoutMatchingTransferPoint()
   {

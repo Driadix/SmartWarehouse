@@ -51,6 +51,7 @@ public enum TopologyValidationErrorCode
   MissingTransferPointForCarrierNode,
   InvalidCarrierOnlyEdge,
   InvalidCarrierNodeTraversalEdge,
+  InvalidCrossLevelTraversalEdge,
   InvalidDeviceBindingNodeReference,
   InvalidDeviceBindingShaftReference,
   InvalidEndpointReference,
