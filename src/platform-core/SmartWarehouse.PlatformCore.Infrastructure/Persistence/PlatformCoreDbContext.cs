@@ -6,8 +6,11 @@ namespace SmartWarehouse.PlatformCore.Infrastructure.Persistence;
 public sealed class PlatformCoreDbContext(DbContextOptions<PlatformCoreDbContext> options) : DbContext(options)
 {
   internal DbSet<TopologyVersionRecord> TopologyVersions => Set<TopologyVersionRecord>();
+  internal DbSet<TopologyLevelRecord> TopologyLevels => Set<TopologyLevelRecord>();
   internal DbSet<TopologyNodeRecord> TopologyNodes => Set<TopologyNodeRecord>();
   internal DbSet<TopologyEdgeRecord> TopologyEdges => Set<TopologyEdgeRecord>();
+  internal DbSet<TopologyShaftRecord> TopologyShafts => Set<TopologyShaftRecord>();
+  internal DbSet<TopologyShaftStopRecord> TopologyShaftStops => Set<TopologyShaftStopRecord>();
   internal DbSet<TopologyStationRecord> TopologyStations => Set<TopologyStationRecord>();
   internal DbSet<TopologyServicePointRecord> TopologyServicePoints => Set<TopologyServicePointRecord>();
   internal DbSet<DeviceBindingRecord> DeviceBindings => Set<DeviceBindingRecord>();

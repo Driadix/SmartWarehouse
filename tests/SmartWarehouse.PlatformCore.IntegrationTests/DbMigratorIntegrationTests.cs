@@ -68,6 +68,38 @@ public sealed class DbMigratorIntegrationTests
       Assert.True(await SchemaExistsAsync(connection, schema), $"Schema '{schema}' was not created.");
     }
 
+    Assert.True(await TableExistsAsync(connection, PersistenceSchemas.Config, "topology_versions"));
+    Assert.True(await TableExistsAsync(connection, PersistenceSchemas.Config, "topology_levels"));
+    Assert.True(await TableExistsAsync(connection, PersistenceSchemas.Config, "topology_nodes"));
+    Assert.True(await TableExistsAsync(connection, PersistenceSchemas.Config, "topology_edges"));
+    Assert.True(await TableExistsAsync(connection, PersistenceSchemas.Config, "topology_shafts"));
+    Assert.True(await TableExistsAsync(connection, PersistenceSchemas.Config, "topology_shaft_stops"));
+    Assert.True(await TableExistsAsync(connection, PersistenceSchemas.Config, "topology_stations"));
+    Assert.True(await TableExistsAsync(connection, PersistenceSchemas.Config, "topology_service_points"));
+    Assert.True(await TableExistsAsync(connection, PersistenceSchemas.Config, "device_bindings"));
+    Assert.True(await TableExistsAsync(connection, PersistenceSchemas.Config, "endpoint_mappings"));
+
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "topology_versions", "TopologyId"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "topology_versions", "Version"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "topology_levels", "LevelId"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "topology_levels", "Ordinal"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "topology_nodes", "LevelId"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "topology_nodes", "Tags"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "topology_nodes", "StationId"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "topology_nodes", "ShaftId"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "topology_nodes", "ServicePointId"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "topology_shafts", "CarrierDeviceId"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "topology_shaft_stops", "LevelId"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "topology_shaft_stops", "CarrierNodeId"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "topology_shaft_stops", "TransferPointId"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "topology_service_points", "PassiveSemantics"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "device_bindings", "InitialNodeId"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "device_bindings", "HomeNodeId"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "device_bindings", "ShaftId"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "endpoint_mappings", "EndpointKind"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "endpoint_mappings", "StationId"));
+    Assert.True(await ColumnExistsAsync(connection, PersistenceSchemas.Config, "endpoint_mappings", "ServicePointId"));
+
     Assert.True(await TableExistsAsync(connection, PersistenceSchemas.Integration, "__ef_migrations_history"));
     Assert.True(await TableExistsAsync(connection, PersistenceSchemas.Integration, "outbox_messages"));
     Assert.True(await TableExistsAsync(connection, PersistenceSchemas.Integration, "inbox_messages"));
@@ -162,6 +194,31 @@ public sealed class DbMigratorIntegrationTests
 
     command.Parameters.AddWithValue("schemaName", schemaName);
     command.Parameters.AddWithValue("tableName", tableName);
+
+    return (bool)(await command.ExecuteScalarAsync())!;
+  }
+
+  private static async Task<bool> ColumnExistsAsync(
+      NpgsqlConnection connection,
+      string schemaName,
+      string tableName,
+      string columnName)
+  {
+    await using var command = new NpgsqlCommand(
+        """
+        select exists (
+          select 1
+          from information_schema.columns
+          where table_schema = @schemaName
+            and table_name = @tableName
+            and column_name = @columnName
+        );
+        """,
+        connection);
+
+    command.Parameters.AddWithValue("schemaName", schemaName);
+    command.Parameters.AddWithValue("tableName", tableName);
+    command.Parameters.AddWithValue("columnName", columnName);
 
     return (bool)(await command.ExecuteScalarAsync())!;
   }
