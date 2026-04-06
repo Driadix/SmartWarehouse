@@ -169,10 +169,10 @@ public sealed class DbMigratorIntegrationTests
   private static async Task<DbMigratorProcessResult> RunDbMigratorAsync(
       IReadOnlyDictionary<string, string>? environmentVariables = null)
   {
-    var projectPath = Path.Combine(TestRepositoryRoot.Get(), "src", "platform-core", "SmartWarehouse.PlatformCore.DbMigrator", "SmartWarehouse.PlatformCore.DbMigrator.csproj");
+    var migratorAssemblyPath = GetDbMigratorAssemblyPath();
     var startInfo = new ProcessStartInfo("dotnet")
     {
-      Arguments = $"run --no-build --project \"{projectPath}\"",
+      Arguments = $"\"{migratorAssemblyPath}\"",
       RedirectStandardOutput = true,
       RedirectStandardError = true,
       UseShellExecute = false,
@@ -217,6 +217,42 @@ public sealed class DbMigratorIntegrationTests
         await standardOutputTask,
         await standardErrorTask);
   }
+
+  private static string GetDbMigratorAssemblyPath()
+  {
+    var (configuration, targetFramework) = GetCurrentBuildCoordinates();
+    var assemblyPath = Path.Combine(
+        TestRepositoryRoot.Get(),
+        "src",
+        "platform-core",
+        "SmartWarehouse.PlatformCore.DbMigrator",
+        "bin",
+        configuration,
+        targetFramework,
+        "SmartWarehouse.PlatformCore.DbMigrator.dll");
+
+    if (!File.Exists(assemblyPath))
+    {
+      throw new FileNotFoundException($"DbMigrator assembly was not found at '{assemblyPath}'.", assemblyPath);
+    }
+
+    return assemblyPath;
+  }
+
+  private static (string Configuration, string TargetFramework) GetCurrentBuildCoordinates()
+  {
+    var baseDirectory = new DirectoryInfo(AppContext.BaseDirectory);
+    var targetFramework = baseDirectory.Name;
+    var configuration = baseDirectory.Parent?.Name;
+
+    if (string.IsNullOrWhiteSpace(configuration) || string.IsNullOrWhiteSpace(targetFramework))
+    {
+      throw new InvalidOperationException($"Unable to infer build coordinates from '{AppContext.BaseDirectory}'.");
+    }
+
+    return (configuration, targetFramework);
+  }
+
   private sealed record DbMigratorProcessResult(
       int ExitCode,
       string StandardOutput,
