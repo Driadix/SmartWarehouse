@@ -49,7 +49,7 @@
 | `status` | `BACKLOG` |
 | `startedAt` | — |
 | `owner` | — |
-| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-002`. |
+| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-003`. |
 
 ---
 
@@ -64,6 +64,7 @@
 | 2026-04-05 | `INIT-003` | Настроен базовый `CI` пайплайн. | Проверяются контракты, форматирование, сборка `.NET`, сборка `Go`, `compose config`, secret scan. |
 | 2026-04-05 | `INIT-004` | Добавлены базовые health-проверки, локальный `docker-compose` и минимальный контур наблюдаемости. | Локальный стенд поднимает `PostgreSQL`, `NATS JetStream`, `OpenTelemetry Collector`, `Prometheus`, `Loki`, `Tempo`, `Grafana`, `platform-core`, `simulation-host`. |
 | 2026-04-06 | `P1-001` | Зафиксирована code-first каноническая модель в `SmartWarehouse.PlatformCore.Domain`: сущности, value objects и enum-ы нормативно зафиксированных состояний текущего базового состава. | В коде появились типы `Job`, `ExecutionTask`, `Payload`, `Device`, `Shuttle3D`, `HybridLift`, `StationBoundary`, `Node`, `Edge`, `Reservation`, `DeviceSession`, `Fault`, `CapabilitySet`; placeholder-класс удалён, нормативно закреплённые словари вынесены в enum-ы, а пока не нормированные коды и состояния оставлены value object-ами; базовые инварианты закреплены unit-тестами. |
+| 2026-04-06 | `P1-002` | Развёрнут модульный каркас `SmartWarehouse.PlatformCore.Application` и `SmartWarehouse.PlatformCore.Infrastructure`: добавлены реальные модули `Contracts`, `Northbound`, `Topology`, `Wes`, `Wcs`, `Messaging`, `Persistence`, `Projections`. | `Class1.cs` и `.gitkeep` удалены, структура проектов теперь явно отражает логические контуры модульного монолита фазы 1; добавлены каталоги модулей и unit-тест, проверяющий состав и границы модулей. |
 
 ---
 
@@ -85,7 +86,7 @@
 | TaskId | Контур | Задача | Статус | Зависит от | Критерий готовности |
 |---|---|---|---|---|---|
 | `P1-001` | `platform-core/domain` | Зафиксировать code-first каноническую модель: `Job`, `ExecutionTask`, `Payload`, `Device`, value objects и enum-ы состояний. | `DONE` | — | В коде существуют типы, соответствующие `DomainModel-v0`, без placeholder-классов. |
-| `P1-002` | `platform-core` | Убрать `Class1.cs` и развернуть реальные модули `Wes`, `Wcs`, `Contracts`, `Topology`, `Messaging`, `Projections`, `Persistence`. | `BACKLOG` | `P1-001` | Структура проектов соответствует логическим контурам, пустые заготовки удалены. |
+| `P1-002` | `platform-core` | Убрать `Class1.cs` и развернуть реальные модули `Wes`, `Wcs`, `Contracts`, `Topology`, `Messaging`, `Projections`, `Persistence`. | `DONE` | `P1-001` | Структура проектов соответствует логическим контурам, пустые заготовки удалены. |
 | `P1-003` | `platform-core/contracts` | Ввести единый envelope для внутренних команд и событий с `messageId`, `correlationId`, `causationId`, `contractVersion`. | `BACKLOG` | `P1-001` | Все прикладные команды и события используют общий контрактный конверт. |
 | `P1-004` | `platform-core/application` | Реализовать внутрипроцессную шину `SubmitExecutionTask` / `CancelExecutionTask` и базовую диспетчеризацию обработчиков. | `BACKLOG` | `P1-002`, `P1-003` | `WES` может передать шаг в `WCS` без общей записи в чужие таблицы. |
 
