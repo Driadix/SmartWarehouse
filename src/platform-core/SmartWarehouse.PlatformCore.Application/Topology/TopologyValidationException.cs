@@ -54,5 +54,6 @@ public enum TopologyValidationErrorCode
   InvalidDeviceBindingNodeReference,
   InvalidDeviceBindingShaftReference,
   InvalidEndpointReference,
+  InvalidEndpointTargetType,
   EndpointIdConflictsWithDeviceId
 }

@@ -282,6 +282,65 @@ public sealed class TopologyConfigurationValidatorTests
   }
 
   [Fact]
+  public void ValidatorRejectsLoadEndpointMappedToUnloadStation()
+  {
+    var errors = Validate(
+        """
+        topologyId: INVALID-ENDPOINT-STATION-TYPE
+        version: 1
+        levels:
+          - levelId: L1
+            ordinal: 1
+        nodes:
+          - nodeId: UNLOAD_NODE
+            nodeType: StationNode
+            levelId: L1
+            stationId: UNLOAD_01
+        stations:
+          - stationId: UNLOAD_01
+            stationType: UNLOAD
+            controlMode: PASSIVE
+            attachedNodeId: UNLOAD_NODE
+            bufferCapacity: 1
+        endpointMappings:
+          - endpointId: inbound.main
+            endpointKind: LOAD_STATION
+            stationId: UNLOAD_01
+        """);
+
+    Assert.Contains(errors, static error => error.Code == TopologyValidationErrorCode.InvalidEndpointTargetType);
+  }
+
+  [Fact]
+  public void ValidatorRejectsChargeEndpointMappedToServiceNode()
+  {
+    var errors = Validate(
+        """
+        topologyId: INVALID-ENDPOINT-SERVICE-TYPE
+        version: 1
+        levels:
+          - levelId: L1
+            ordinal: 1
+        nodes:
+          - nodeId: SERVICE_NODE
+            nodeType: ServiceNode
+            levelId: L1
+            servicePointId: SERVICE_01
+        servicePoints:
+          - servicePointId: SERVICE_01
+            servicePointType: SERVICE
+            nodeId: SERVICE_NODE
+            passiveSemantics: ARRIVAL_CONFIRMS_ENGAGEMENT
+        endpointMappings:
+          - endpointId: charge.main
+            endpointKind: CHARGE_POINT
+            servicePointId: SERVICE_01
+        """);
+
+    Assert.Contains(errors, static error => error.Code == TopologyValidationErrorCode.InvalidEndpointTargetType);
+  }
+
+  [Fact]
   public void ValidatorRejectsEndpointIdentifierThatReusesDeviceIdentifier()
   {
     var errors = Validate(

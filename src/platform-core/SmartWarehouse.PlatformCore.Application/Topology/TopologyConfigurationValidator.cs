@@ -328,21 +328,37 @@ public sealed class WarehouseTopologyConfigValidator : IWarehouseTopologyConfigV
       {
         case EndpointKind.LoadStation:
         case EndpointKind.UnloadStation:
-          if (endpointMapping.StationId is { } stationId && !stationsById.ContainsKey(stationId))
+          if (endpointMapping.StationId is { } stationId && !stationsById.TryGetValue(stationId, out _))
           {
             errors.Add(new TopologyValidationError(
                 TopologyValidationErrorCode.InvalidEndpointReference,
                 $"Endpoint '{endpointMapping.EndpointId}' references unknown station '{stationId}'."));
           }
+          else if (endpointMapping.StationId is { } existingStationId &&
+                   stationsById.TryGetValue(existingStationId, out var existingStation) &&
+                   !MatchesStationEndpointKind(endpointMapping.EndpointKind, existingStation.StationType))
+          {
+            errors.Add(new TopologyValidationError(
+                TopologyValidationErrorCode.InvalidEndpointTargetType,
+                $"Endpoint '{endpointMapping.EndpointId}' kind '{endpointMapping.EndpointKind}' is incompatible with station '{existingStationId}' type '{existingStation.StationType}'."));
+          }
 
           break;
         case EndpointKind.ChargePoint:
         case EndpointKind.ServicePoint:
-          if (endpointMapping.ServicePointId is { } servicePointId && !servicePointsById.ContainsKey(servicePointId))
+          if (endpointMapping.ServicePointId is { } servicePointId && !servicePointsById.TryGetValue(servicePointId, out _))
           {
             errors.Add(new TopologyValidationError(
                 TopologyValidationErrorCode.InvalidEndpointReference,
                 $"Endpoint '{endpointMapping.EndpointId}' references unknown service point '{servicePointId}'."));
+          }
+          else if (endpointMapping.ServicePointId is { } existingServicePointId &&
+                   servicePointsById.TryGetValue(existingServicePointId, out var existingServicePoint) &&
+                   !MatchesServicePointEndpointKind(endpointMapping.EndpointKind, existingServicePoint.ServicePointType))
+          {
+            errors.Add(new TopologyValidationError(
+                TopologyValidationErrorCode.InvalidEndpointTargetType,
+                $"Endpoint '{endpointMapping.EndpointId}' kind '{endpointMapping.EndpointKind}' is incompatible with service point '{existingServicePointId}' type '{existingServicePoint.ServicePointType}'."));
           }
 
           break;
@@ -351,6 +367,22 @@ public sealed class WarehouseTopologyConfigValidator : IWarehouseTopologyConfigV
       }
     }
   }
+
+  private static bool MatchesStationEndpointKind(EndpointKind endpointKind, StationType stationType) =>
+      (endpointKind, stationType) switch
+      {
+        (EndpointKind.LoadStation, StationType.Load) => true,
+        (EndpointKind.UnloadStation, StationType.Unload) => true,
+        _ => false
+      };
+
+  private static bool MatchesServicePointEndpointKind(EndpointKind endpointKind, ServicePointType servicePointType) =>
+      (endpointKind, servicePointType) switch
+      {
+        (EndpointKind.ChargePoint, ServicePointType.Charge) => true,
+        (EndpointKind.ServicePoint, ServicePointType.Service) => true,
+        _ => false
+      };
 
   private static void ValidateShaftStopNode(
       ShaftId shaftId,
