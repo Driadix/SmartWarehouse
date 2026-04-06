@@ -13,11 +13,11 @@ internal sealed class InProcessApplicationCommandBus(IServiceProvider servicePro
 
     return handlers.Length switch
     {
-        1 => handlers[0].HandleAsync(command, cancellationToken),
-        0 => throw new InvalidOperationException(
-            $"No application command handler is registered for '{typeof(TCommand).FullName}'."),
-        _ => throw new InvalidOperationException(
-            $"Exactly one application command handler must be registered for '{typeof(TCommand).FullName}', but {handlers.Length} were found.")
+      1 => handlers[0].HandleAsync(command, cancellationToken),
+      0 => throw new InvalidOperationException(
+          $"No application command handler is registered for '{typeof(TCommand).FullName}'."),
+      _ => throw new InvalidOperationException(
+          $"Exactly one application command handler must be registered for '{typeof(TCommand).FullName}', but {handlers.Length} were found.")
     };
   }
 }
