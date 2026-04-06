@@ -1,27 +1,58 @@
 using System.Diagnostics;
+using System.Net.Http;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using SmartWarehouse.PlatformCore.DbMigrator;
 using SmartWarehouse.PlatformCore.Infrastructure.Persistence;
-using Testcontainers.PostgreSql;
 
 namespace SmartWarehouse.PlatformCore.IntegrationTests;
 
+[Collection(PlatformCoreIntegrationFixtureDefinition.Name)]
 public sealed class DbMigratorIntegrationTests
 {
+  private readonly PlatformCoreTestcontainersHarness _harness;
+
+  public DbMigratorIntegrationTests(PlatformCoreTestcontainersHarness harness)
+  {
+    _harness = harness;
+  }
+
+  [Fact]
+  public async Task SharedHarnessStartsPostgreSqlAndNatsJetStream()
+  {
+    await using var environment = await _harness.CreateEnvironmentAsync();
+
+    await using var connection = new NpgsqlConnection(environment.PlatformCoreConnectionString);
+    await connection.OpenAsync();
+
+    await using var command = new NpgsqlCommand("select 1;", connection);
+    var scalar = (int)(await command.ExecuteScalarAsync())!;
+
+    Assert.Equal(1, scalar);
+
+    using var httpClient = new HttpClient
+    {
+      BaseAddress = environment.NatsMonitoringBaseAddress,
+      Timeout = TimeSpan.FromSeconds(3)
+    };
+
+    using var response = await httpClient.GetAsync("jsz?config=true");
+    response.EnsureSuccessStatusCode();
+  }
+
   [Fact]
   public async Task DbMigratorAppliesPlatformCoreSchemaToFreshDatabase()
   {
-    await using var database = await StartDatabaseAsync();
+    await using var environment = await _harness.CreateEnvironmentAsync();
 
-    var result = await RunDbMigratorAsync(database.GetConnectionString());
+    var result = await RunDbMigratorAsync(environment.CreateProcessEnvironmentVariables());
     var logOutput = result.StandardOutput + Environment.NewLine + result.StandardError;
 
     Assert.Equal((int)DbMigratorExitCode.Success, result.ExitCode);
     Assert.Contains("Database schema is up to date.", logOutput, StringComparison.OrdinalIgnoreCase);
     Assert.DoesNotContain("Failed executing DbCommand", logOutput, StringComparison.OrdinalIgnoreCase);
 
-    await using var context = CreateContext(database.GetConnectionString());
+    await using var context = CreateContext(environment.PlatformCoreConnectionString);
     var availableMigrationIds = context.Database.GetMigrations().ToArray();
     var appliedMigrationIds = (await context.Database.GetAppliedMigrationsAsync()).ToArray();
     var pendingMigrationIds = (await context.Database.GetPendingMigrationsAsync()).ToArray();
@@ -29,7 +60,7 @@ public sealed class DbMigratorIntegrationTests
     Assert.Equal(availableMigrationIds, appliedMigrationIds);
     Assert.Empty(pendingMigrationIds);
 
-    await using var connection = new NpgsqlConnection(database.GetConnectionString());
+    await using var connection = new NpgsqlConnection(environment.PlatformCoreConnectionString);
     await connection.OpenAsync();
 
     foreach (var schema in PersistenceSchemas.All)
@@ -48,15 +79,15 @@ public sealed class DbMigratorIntegrationTests
   [Fact]
   public async Task DbMigratorIsIdempotentWhenDatabaseAlreadyUpToDate()
   {
-    await using var database = await StartDatabaseAsync();
+    await using var environment = await _harness.CreateEnvironmentAsync();
 
-    var firstRun = await RunDbMigratorAsync(database.GetConnectionString());
-    var secondRun = await RunDbMigratorAsync(database.GetConnectionString());
+    var firstRun = await RunDbMigratorAsync(environment.CreateProcessEnvironmentVariables());
+    var secondRun = await RunDbMigratorAsync(environment.CreateProcessEnvironmentVariables());
 
     Assert.Equal((int)DbMigratorExitCode.Success, firstRun.ExitCode);
     Assert.Equal((int)DbMigratorExitCode.Success, secondRun.ExitCode);
 
-    await using var context = CreateContext(database.GetConnectionString());
+    await using var context = CreateContext(environment.PlatformCoreConnectionString);
     var availableMigrationIds = context.Database.GetMigrations().ToArray();
     var appliedMigrationIds = (await context.Database.GetAppliedMigrationsAsync()).ToArray();
 
@@ -66,7 +97,7 @@ public sealed class DbMigratorIntegrationTests
   [Fact]
   public async Task DbMigratorReturnsMissingConnectionStringExitCode()
   {
-    var result = await RunDbMigratorAsync(connectionString: null);
+    var result = await RunDbMigratorAsync();
 
     Assert.Equal((int)DbMigratorExitCode.MissingConnectionString, result.ExitCode);
     Assert.Contains("Connection string 'PlatformCore' is required.", result.StandardError, StringComparison.Ordinal);
@@ -78,7 +109,11 @@ public sealed class DbMigratorIntegrationTests
     const string unreachableConnectionString =
         "Host=127.0.0.1;Port=1;Database=smartwarehouse;Username=smartwarehouse;Password=smartwarehouse;Timeout=2;Command Timeout=2";
 
-    var result = await RunDbMigratorAsync(unreachableConnectionString);
+    var result = await RunDbMigratorAsync(
+        new Dictionary<string, string>
+        {
+          ["ConnectionStrings__PlatformCore"] = unreachableConnectionString
+        });
 
     Assert.Equal((int)DbMigratorExitCode.MigrationFailed, result.ExitCode);
     Assert.Contains("Database migration failed.", result.StandardError + result.StandardOutput, StringComparison.OrdinalIgnoreCase);
@@ -93,18 +128,6 @@ public sealed class DbMigratorIntegrationTests
         .Options;
 
     return new PlatformCoreDbContext(options);
-  }
-
-  private static async Task<PostgreSqlContainer> StartDatabaseAsync()
-  {
-    var database = new PostgreSqlBuilder()
-        .WithDatabase($"smartwarehouse_{Guid.NewGuid():N}")
-        .WithUsername("smartwarehouse")
-        .WithPassword("smartwarehouse")
-        .Build();
-
-    await database.StartAsync();
-    return database;
   }
 
   private static async Task<bool> SchemaExistsAsync(NpgsqlConnection connection, string schemaName)
@@ -143,25 +166,29 @@ public sealed class DbMigratorIntegrationTests
     return (bool)(await command.ExecuteScalarAsync())!;
   }
 
-  private static async Task<DbMigratorProcessResult> RunDbMigratorAsync(string? connectionString)
+  private static async Task<DbMigratorProcessResult> RunDbMigratorAsync(
+      IReadOnlyDictionary<string, string>? environmentVariables = null)
   {
-    var projectPath = Path.Combine(GetRepositoryRoot(), "src", "platform-core", "SmartWarehouse.PlatformCore.DbMigrator", "SmartWarehouse.PlatformCore.DbMigrator.csproj");
+    var projectPath = Path.Combine(TestRepositoryRoot.Get(), "src", "platform-core", "SmartWarehouse.PlatformCore.DbMigrator", "SmartWarehouse.PlatformCore.DbMigrator.csproj");
     var startInfo = new ProcessStartInfo("dotnet")
     {
       Arguments = $"run --no-build --project \"{projectPath}\"",
       RedirectStandardOutput = true,
       RedirectStandardError = true,
       UseShellExecute = false,
-      WorkingDirectory = GetRepositoryRoot()
+      WorkingDirectory = TestRepositoryRoot.Get()
     };
 
     startInfo.Environment["DOTNET_ENVIRONMENT"] = "Development";
     startInfo.Environment.Remove("ConnectionStrings__PlatformCore");
     startInfo.Environment.Remove("PlatformCore__ConnectionString");
 
-    if (connectionString is not null)
+    if (environmentVariables is not null)
     {
-      startInfo.Environment["ConnectionStrings__PlatformCore"] = connectionString;
+      foreach (var (key, value) in environmentVariables)
+      {
+        startInfo.Environment[key] = value;
+      }
     }
 
     using var process = new Process { StartInfo = startInfo };
@@ -190,24 +217,6 @@ public sealed class DbMigratorIntegrationTests
         await standardOutputTask,
         await standardErrorTask);
   }
-
-  private static string GetRepositoryRoot()
-  {
-    var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-    while (directory is not null)
-    {
-      if (File.Exists(Path.Combine(directory.FullName, "SmartWarehouse.sln")))
-      {
-        return directory.FullName;
-      }
-
-      directory = directory.Parent;
-    }
-
-    throw new InvalidOperationException("Repository root was not found.");
-  }
-
   private sealed record DbMigratorProcessResult(
       int ExitCode,
       string StandardOutput,

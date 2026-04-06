@@ -49,7 +49,7 @@
 | `status` | `BACKLOG` |
 | `startedAt` | — |
 | `owner` | — |
-| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-008`. |
+| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-009`. |
 
 ---
 
@@ -70,6 +70,7 @@
 | 2026-04-06 | `P1-005` | Поднят `PlatformCoreDbContext` и введена модель хранения по схемам `config`, `wes`, `wcs`, `integration`, `projection`, `audit`. | В `Infrastructure.Persistence` появились `PlatformCoreDbContext`, DI-регистрация `AddPlatformCorePersistence`, отдельные persistence-типы для write-model, projection и audit, а также schema-aware EF Core mapping под таблицы из `ADR-009`; `Host` получил подключение `DbContext` через `AddDbContext`, а unit-тесты подтверждают наличие всех шести схем и ключевых таблиц в модели. |
 | 2026-04-06 | `P1-006` | Создана первая EF Core миграция `InitialPlatformCoreSchema` и подготовлен design-time запуск миграций для `PlatformCoreDbContext`. | В `Infrastructure.Persistence` добавлены `DesignTimePlatformCoreDbContextFactory`, migration files и model snapshot; первая миграция создаёт схемы `config`, `wes`, `wcs`, `integration`, `projection`, `audit` и таблицы `outbox_messages`, `inbox_messages`, `northbound_idempotency`, `webhook_deliveries`, `platform_event_journal`, а локальный manifest `dotnet-ef` и unit-тест закрепляют повторяемое применение и наличие миграции в кодовой базе. |
 | 2026-04-06 | `P1-007` | Реализован рабочий `DbMigrator` на `Generic Host` с корректными exit code и отдельным orchestration-слоем применения миграций. | `DbMigrator` больше не является заглушкой: он читает `ConnectionStrings:PlatformCore`, применяет миграции `PlatformCoreDbContext`, корректно возвращает коды завершения для успеха, отсутствующей конфигурации и ошибки миграции; unit-тесты покрывают orchestration-логику, а integration-тесты поднимают реальный PostgreSQL-контейнер, проверяют применение схем и таблиц, идемпотентность повторного запуска и ошибочные сценарии процесса. |
+| 2026-04-06 | `P1-008` | Собран общий `Testcontainers` harness для integration-тестов с `PostgreSQL` и `NATS JetStream`. | В `SmartWarehouse.PlatformCore.IntegrationTests` появился общий collection fixture, который один раз поднимает `PostgreSQL` и `NATS JetStream`, выдаёт каждому тесту изолированную БД и готовые конфигурационные overrides; точечный старт контейнера из проверок `DbMigrator` убран, а базовая доступность обеих зависимостей закреплена отдельной integration-проверкой. |
 
 ---
 
@@ -102,7 +103,7 @@
 | `P1-005` | `platform-core/persistence` | Поднять `DbContext` и физически разнести схемы `config`, `wes`, `wcs`, `integration`, `projection`, `audit`. | `DONE` | `P1-001`, `P1-002` | Схемы БД и базовые агрегаты отражены в модели хранения. |
 | `P1-006` | `platform-core/persistence` | Создать первую миграцию БД, включая `outbox`, `inbox`, `northbound_idempotency`, `webhook_deliveries`, `platform_event_journal`. | `DONE` | `P1-005` | Миграция создаёт минимальную рабочую схему фазы 1. |
 | `P1-007` | `db-migrator` | Реализовать рабочий `DbMigrator` вместо заглушки. | `DONE` | `P1-006` | Контейнер мигратора применяет миграции и завершает работу с корректным кодом возврата. |
-| `P1-008` | `tests/integration` | Поднять общий `Testcontainers` harness для `PostgreSQL` и `NATS JetStream`. | `BACKLOG` | `P1-006` | Интеграционные тесты могут запускать реальные зависимости без локальной ручной подготовки. |
+| `P1-008` | `tests/integration` | Поднять общий `Testcontainers` harness для `PostgreSQL` и `NATS JetStream`. | `DONE` | `P1-006` | Интеграционные тесты могут запускать реальные зависимости без локальной ручной подготовки. |
 
 ### 6.3. Конфигурация топологии и маршрутизация
 
@@ -197,4 +198,4 @@
 
 - Мягкий архитектурный риск на старте: `DomainModel-v0` пока имеет статус draft, поэтому `P1-001` желательно закрыть первым.
 - Отсутствие кода в `digital-twin-ui` и `edge-integration-host` не блокирует старт ядра, но эти контуры нельзя забывать при стабилизации фазы 1.
-- Ближайший технический долг после закрытия `P1-007` — вынести точечные integration-проверки мигратора в общий `Testcontainers` harness для `PostgreSQL` и `NATS JetStream` по задаче `P1-008`.
+- После закрытия `P1-008` следующий рекомендуемый шаг — `P1-009`: ввести DTO и загрузку YAML-конфигурации топологии для фикстур `warehouse-a.nominal.yaml` и `warehouse-a.no-route.yaml`.
