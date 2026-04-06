@@ -49,7 +49,7 @@
 | `status` | `BACKLOG` |
 | `startedAt` | — |
 | `owner` | — |
-| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-012`. |
+| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-013`. |
 
 ---
 
@@ -74,6 +74,7 @@
 | 2026-04-06 | `P1-009` | Введены каноническая модель конфигурации топологии и загрузчик YAML для фазовых фикстур. | В `SmartWarehouse.PlatformCore.Application.Topology` появились DTO конфигурации, типизированные идентификаторы `TopologyId` / `LevelId` / `ShaftId` / `ServicePointId`, явный загрузчик YAML в каноническую модель на `YamlDotNet` и детальные unit-тесты на номинальные, пустые и ошибочные сценарии; `warehouse-a.nominal.yaml` и `warehouse-a.no-route.yaml` читаются в каноническую модель без точечной логики в последующих integration-тестах. |
 | 2026-04-06 | `P1-010` | Реализован валидатор статических инвариантов конфигурации топологии. | В `SmartWarehouse.PlatformCore.Application.Topology` появился отдельный валидатор с накоплением нарушений ссылочной целостности и графовых ограничений для станций, сервисных точек, шахт, `CarrierNode`, рёбер `CARRIER_ONLY`, привязок устройств и конечных точек; `warehouse-a.nominal.yaml` и `warehouse-a.no-route.yaml` проходят структурную валидацию, а детальные unit-тесты покрывают сложные и краевые случаи до старта исполнения. |
 | 2026-04-06 | `P1-011` | Реализован topology compiler с runtime-моделью compiled topology и устойчивыми lookup-индексами. | В `SmartWarehouse.PlatformCore.Application.Topology` появились `CompiledWarehouseTopology`, `WarehouseTopologyCompiler` и DI-регистрация, которые после валидации собирают endpoint-resolution по `endpointId`, станции, сервисные точки, узлы, рёбра, шахты, остановы и привязки устройств в единое runtime-представление; unit-тесты покрывают nominal, disconnected, alias-адреса, неизвестные endpoint'ы и несовместимые `endpointKind`. |
+| 2026-04-06 | `P1-012` | Реализован базовый сервис маршрутизации `WES` поверх compiled topology и нормативная ошибка `NO_ADMISSIBLE_ROUTE`. | В `SmartWarehouse.PlatformCore.Application.Wes` появились `IWarehouseRouteService`, `WarehouseRouteService`, DI-регистрация и `NoAdmissibleRouteException`; сервис строит взвешенный `PlannedRoute` между `endpointId`, учитывает направленные рёбра графа и обязательные переходы `TransferPoint <-> CarrierNode` внутри шахты, а unit-тесты покрывают nominal, disconnected, выбор минимального веса, псевдонимы одной точки, неизвестные endpoint'ы и DI. |
 
 ---
 
@@ -115,7 +116,7 @@
 | `P1-009` | `platform-core/topology` | Реализовать DTO и загрузку YAML-конфигурации топологии. | `DONE` | `P1-001`, `P1-002` | `warehouse-a.nominal.yaml` и `warehouse-a.no-route.yaml` читаются в каноническую модель. |
 | `P1-010` | `platform-core/topology` | Реализовать валидатор инвариантов конфигурации и негативные тесты для `no-route` фикстуры. | `DONE` | `P1-009` | Нарушения топологии выявляются до старта исполнения. |
 | `P1-011` | `platform-core/topology` | Реализовать topology compiler: трансляцию `endpointId` в станции, сервисные точки, узлы и привязки ресурсов. | `DONE` | `P1-009`, `P1-010` | Верхний контур получает устойчивое сопоставление бизнес-адресов с внутренней топологией. |
-| `P1-012` | `platform-core/wes` | Реализовать базовый route service по графу и синхронную ошибку `NO_ADMISSIBLE_ROUTE`. | `BACKLOG` | `P1-011` | Для валидной топологии строится маршрут, для невозможной возвращается нормативная ошибка. |
+| `P1-012` | `platform-core/wes` | Реализовать базовый route service по графу и синхронную ошибку `NO_ADMISSIBLE_ROUTE`. | `DONE` | `P1-011` | Для валидной топологии строится маршрут, для невозможной возвращается нормативная ошибка. |
 
 ### 6.4. `Northbound API` и контур `WES`
 
