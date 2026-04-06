@@ -4,6 +4,10 @@
     <ProjectReference Include="..\SmartWarehouse.PlatformCore.Infrastructure\SmartWarehouse.PlatformCore.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>

@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\platform-core\SmartWarehouse.PlatformCore.Domain\SmartWarehouse.PlatformCore.Domain.csproj" />
     <ProjectReference Include="..\..\src\platform-core\SmartWarehouse.PlatformCore.Application\SmartWarehouse.PlatformCore.Application.csproj" />
+    <ProjectReference Include="..\..\src\platform-core\SmartWarehouse.PlatformCore.DbMigrator\SmartWarehouse.PlatformCore.DbMigrator.csproj" />
     <ProjectReference Include="..\..\src\platform-core\SmartWarehouse.PlatformCore.Infrastructure\SmartWarehouse.PlatformCore.Infrastructure.csproj" />
   </ItemGroup>
 

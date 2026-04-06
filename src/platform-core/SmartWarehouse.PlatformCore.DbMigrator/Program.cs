@@ -1,9 +1,17 @@
 namespace SmartWarehouse.PlatformCore.DbMigrator;
 
-sealed class Program
+public static class Program
 {
-  static void Main(string[] args)
+  public static async Task<int> Main(string[] args)
   {
-    Console.WriteLine("Hello, World!");
+    try
+    {
+      return await DbMigratorApplication.RunAsync(args);
+    }
+    catch (Exception exception)
+    {
+      Console.Error.WriteLine($"Fatal db-migrator error: {exception}");
+      return (int)DbMigratorExitCode.MigrationFailed;
+    }
   }
 }
