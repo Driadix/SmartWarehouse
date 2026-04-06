@@ -81,7 +81,7 @@ public sealed class WarehouseRouteService : IWarehouseRouteService
     var frontier = new PriorityQueue<NodeId, decimal>();
     var distances = new Dictionary<NodeId, decimal>
     {
-        [sourceNodeId] = 0m
+      [sourceNodeId] = 0m
     };
     var previousNodes = new Dictionary<NodeId, NodeId>();
 
