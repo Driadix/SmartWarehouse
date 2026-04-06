@@ -49,7 +49,7 @@
 | `status` | `BACKLOG` |
 | `startedAt` | — |
 | `owner` | — |
-| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-009`. |
+| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-010`. |
 
 ---
 
@@ -71,6 +71,7 @@
 | 2026-04-06 | `P1-006` | Создана первая EF Core миграция `InitialPlatformCoreSchema` и подготовлен design-time запуск миграций для `PlatformCoreDbContext`. | В `Infrastructure.Persistence` добавлены `DesignTimePlatformCoreDbContextFactory`, migration files и model snapshot; первая миграция создаёт схемы `config`, `wes`, `wcs`, `integration`, `projection`, `audit` и таблицы `outbox_messages`, `inbox_messages`, `northbound_idempotency`, `webhook_deliveries`, `platform_event_journal`, а локальный manifest `dotnet-ef` и unit-тест закрепляют повторяемое применение и наличие миграции в кодовой базе. |
 | 2026-04-06 | `P1-007` | Реализован рабочий `DbMigrator` на `Generic Host` с корректными exit code и отдельным orchestration-слоем применения миграций. | `DbMigrator` больше не является заглушкой: он читает `ConnectionStrings:PlatformCore`, применяет миграции `PlatformCoreDbContext`, корректно возвращает коды завершения для успеха, отсутствующей конфигурации и ошибки миграции; unit-тесты покрывают orchestration-логику, а integration-тесты поднимают реальный PostgreSQL-контейнер, проверяют применение схем и таблиц, идемпотентность повторного запуска и ошибочные сценарии процесса. |
 | 2026-04-06 | `P1-008` | Собран общий `Testcontainers` harness для integration-тестов с `PostgreSQL` и `NATS JetStream`. | В `SmartWarehouse.PlatformCore.IntegrationTests` появился общий collection fixture, который один раз поднимает `PostgreSQL` и `NATS JetStream`, выдаёт каждому тесту изолированную БД и готовые конфигурационные overrides; точечный старт контейнера из проверок `DbMigrator` убран, а базовая доступность обеих зависимостей закреплена отдельной integration-проверкой. |
+| 2026-04-06 | `P1-009` | Введены каноническая модель конфигурации топологии и загрузчик YAML для фазовых фикстур. | В `SmartWarehouse.PlatformCore.Application.Topology` появились DTO конфигурации, типизированные идентификаторы `TopologyId` / `LevelId` / `ShaftId` / `ServicePointId`, явный загрузчик YAML в каноническую модель на `YamlDotNet` и детальные unit-тесты на номинальные, пустые и ошибочные сценарии; `warehouse-a.nominal.yaml` и `warehouse-a.no-route.yaml` читаются в каноническую модель без точечной логики в последующих integration-тестах. |
 
 ---
 
@@ -109,8 +110,8 @@
 
 | TaskId | Контур | Задача | Статус | Зависит от | Критерий готовности |
 |---|---|---|---|---|---|
-| `P1-009` | `platform-core/topology` | Реализовать DTO и загрузку YAML-конфигурации топологии. | `BACKLOG` | `P1-001`, `P1-002` | `warehouse-a.nominal.yaml` и `warehouse-a.no-route.yaml` читаются в каноническую модель. |
-| `P1-010` | `platform-core/topology` | Реализовать validator инвариантов конфигурации и негативные тесты для `no-route` фикстуры. | `BACKLOG` | `P1-009` | Нарушения топологии выявляются до старта исполнения. |
+| `P1-009` | `platform-core/topology` | Реализовать DTO и загрузку YAML-конфигурации топологии. | `DONE` | `P1-001`, `P1-002` | `warehouse-a.nominal.yaml` и `warehouse-a.no-route.yaml` читаются в каноническую модель. |
+| `P1-010` | `platform-core/topology` | Реализовать валидатор инвариантов конфигурации и негативные тесты для `no-route` фикстуры. | `BACKLOG` | `P1-009` | Нарушения топологии выявляются до старта исполнения. |
 | `P1-011` | `platform-core/topology` | Реализовать topology compiler: трансляцию `endpointId` в станции, сервисные точки, узлы и привязки ресурсов. | `BACKLOG` | `P1-009`, `P1-010` | Верхний контур получает устойчивое сопоставление бизнес-адресов с внутренней топологией. |
 | `P1-012` | `platform-core/wes` | Реализовать базовый route service по графу и синхронную ошибку `NO_ADMISSIBLE_ROUTE`. | `BACKLOG` | `P1-011` | Для валидной топологии строится маршрут, для невозможной возвращается нормативная ошибка. |
 
@@ -198,4 +199,4 @@
 
 - Мягкий архитектурный риск на старте: `DomainModel-v0` пока имеет статус draft, поэтому `P1-001` желательно закрыть первым.
 - Отсутствие кода в `digital-twin-ui` и `edge-integration-host` не блокирует старт ядра, но эти контуры нельзя забывать при стабилизации фазы 1.
-- После закрытия `P1-008` следующий рекомендуемый шаг — `P1-009`: ввести DTO и загрузку YAML-конфигурации топологии для фикстур `warehouse-a.nominal.yaml` и `warehouse-a.no-route.yaml`.
+- После закрытия `P1-009` следующий рекомендуемый шаг — `P1-010`: реализовать валидатор инвариантов конфигурации и негативные тесты для `warehouse-a.no-route.yaml`.

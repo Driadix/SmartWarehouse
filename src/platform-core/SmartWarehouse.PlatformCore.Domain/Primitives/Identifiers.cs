@@ -131,3 +131,47 @@ public readonly record struct EndpointId
 
   public static implicit operator string(EndpointId value) => value.Value;
 }
+
+public readonly record struct TopologyId
+{
+  public TopologyId(string value) => Value = DomainGuard.NotWhiteSpace(value, nameof(value));
+
+  public string Value { get; }
+
+  public override string ToString() => Value;
+
+  public static implicit operator string(TopologyId value) => value.Value;
+}
+
+public readonly record struct LevelId
+{
+  public LevelId(string value) => Value = DomainGuard.NotWhiteSpace(value, nameof(value));
+
+  public string Value { get; }
+
+  public override string ToString() => Value;
+
+  public static implicit operator string(LevelId value) => value.Value;
+}
+
+public readonly record struct ShaftId
+{
+  public ShaftId(string value) => Value = DomainGuard.NotWhiteSpace(value, nameof(value));
+
+  public string Value { get; }
+
+  public override string ToString() => Value;
+
+  public static implicit operator string(ShaftId value) => value.Value;
+}
+
+public readonly record struct ServicePointId
+{
+  public ServicePointId(string value) => Value = DomainGuard.NotWhiteSpace(value, nameof(value));
+
+  public string Value { get; }
+
+  public override string ToString() => Value;
+
+  public static implicit operator string(ServicePointId value) => value.Value;
+}
