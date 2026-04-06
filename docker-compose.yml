@@ -4,6 +4,7 @@ services:
   postgres:
     image: postgres:18-alpine
     container_name: smartwarehouse-postgres
+    profiles: ["infra", "apps"]
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-smartwarehouse}
       POSTGRES_USER: ${POSTGRES_USER:-smartwarehouse}
@@ -25,24 +26,205 @@ services:
   nats:
     image: nats:2.12-alpine
     container_name: smartwarehouse-nats
+    profiles: ["infra", "apps"]
     command: ["-js", "-c", "/etc/nats/nats-server.conf"]
     ports:
       - "${NATS_PORT:-4222}:4222"
       - "${NATS_HTTP_PORT:-8222}:8222"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O - http://127.0.0.1:8222/healthz >/dev/null 2>&1 || exit 1",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - ./deploy/local/nats/nats-server.conf:/etc/nats/nats-server.conf:ro
       - nats-data:/data
 
+  loki:
+    image: grafana/loki:3.7.1
+    container_name: smartwarehouse-loki
+    profiles: ["observability"]
+    command: ["-config.file=/etc/loki/config.yml"]
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    volumes:
+      - ./deploy/local/loki/config.yml:/etc/loki/config.yml:ro
+      - loki-data:/loki
+
+  tempo:
+    image: grafana/tempo:2.8.2
+    container_name: smartwarehouse-tempo
+    profiles: ["observability"]
+    command: ["-config.file=/etc/tempo/tempo.yml"]
+    ports:
+      - "${TEMPO_PORT:-3200}:3200"
+    volumes:
+      - ./deploy/local/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+      - tempo-data:/var/tempo
+
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.149.0
     container_name: smartwarehouse-otel
+    profiles: ["observability", "apps"]
     command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    depends_on:
+      loki:
+        condition: service_started
+        required: false
+      tempo:
+        condition: service_started
+        required: false
     ports:
       - "${OTEL_OTLP_GRPC_PORT:-4317}:4317"
       - "${OTEL_OTLP_HTTP_PORT:-4318}:4318"
+      - "${OTEL_COLLECTOR_PROMETHEUS_PORT:-8889}:8889"
     volumes:
       - ./deploy/local/otel/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
 
+  prometheus:
+    image: prom/prometheus:v3.11.0
+    container_name: smartwarehouse-prometheus
+    profiles: ["observability"]
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-remote-write-receiver"
+    depends_on:
+      otel-collector:
+        condition: service_started
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O - http://127.0.0.1:9090/-/ready >/dev/null 2>&1 || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - ./deploy/local/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  grafana:
+    image: grafana/grafana:12.4.2
+    container_name: smartwarehouse-grafana
+    profiles: ["observability"]
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_started
+      tempo:
+        condition: service_started
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O - http://127.0.0.1:3000/api/health >/dev/null 2>&1 || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - ./deploy/local/grafana/provisioning/datasources/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - grafana-data:/var/lib/grafana
+
+  db-migrator:
+    build:
+      context: .
+      dockerfile: src/platform-core/SmartWarehouse.PlatformCore.DbMigrator/Dockerfile
+    container_name: smartwarehouse-db-migrator
+    profiles: ["apps"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      ConnectionStrings__PlatformCore: Host=postgres;Port=5432;Database=${POSTGRES_DB:-smartwarehouse};Username=${POSTGRES_USER:-smartwarehouse};Password=${POSTGRES_PASSWORD:-smartwarehouse}
+    restart: "no"
+
+  platform-core:
+    build:
+      context: .
+      dockerfile: src/platform-core/SmartWarehouse.PlatformCore.Host/Dockerfile
+    container_name: smartwarehouse-platform-core
+    profiles: ["apps"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SERVICE_NAME: platform-core
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment=local,site.id=local,service.version=0.1.0-dev
+      HealthChecks__Dependencies__Postgres__Enabled: "true"
+      HealthChecks__Dependencies__Postgres__Host: postgres
+      HealthChecks__Dependencies__Postgres__Port: "5432"
+      HealthChecks__Dependencies__Postgres__TimeoutSeconds: "3"
+      HealthChecks__Dependencies__Nats__Enabled: "true"
+      HealthChecks__Dependencies__Nats__Host: nats
+      HealthChecks__Dependencies__Nats__Port: "4222"
+      HealthChecks__Dependencies__Nats__TimeoutSeconds: "3"
+      ConnectionStrings__PlatformCore: Host=postgres;Port=5432;Database=${POSTGRES_DB:-smartwarehouse};Username=${POSTGRES_USER:-smartwarehouse};Password=${POSTGRES_PASSWORD:-smartwarehouse}
+    ports:
+      - "${PLATFORM_CORE_HTTP_PORT:-8080}:8080"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O - http://127.0.0.1:8080/health/ready >/dev/null 2>&1 || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  simulation-host:
+    build:
+      context: ./src/simulation-host
+      dockerfile: Dockerfile
+    container_name: smartwarehouse-simulation-host
+    profiles: ["apps"]
+    depends_on:
+      nats:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+        required: false
+    environment:
+      SIMULATION_HOST_PORT: "8080"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SERVICE_NAME: simulation-host
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment=local,site.id=local,service.version=0.1.0-dev
+    ports:
+      - "${SIMULATION_HOST_HTTP_PORT:-8090}:8080"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O - http://127.0.0.1:8080/health/ready >/dev/null 2>&1 || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
 volumes:
-  postgres-data:
+  grafana-data:
+  loki-data:
   nats-data:
+  postgres-data:
+  tempo-data:

@@ -1,0 +1,17 @@
+.git
+.github
+.dotnet
+.vs
+.vscode
+.idea
+.env
+.env.*
+!.env.example
+**/.codex
+**/.tmp**
+**/bin
+**/obj
+**/node_modules
+TestResults
+eng/knowledge-map/build
+docs/Standards

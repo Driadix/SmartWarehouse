@@ -3,8 +3,8 @@
 .vscode/
 .idea/
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 **/.codex
 **/.tmp**
 **/bin/

@@ -38,7 +38,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: eng/tooling/package-lock.json
 
@@ -130,7 +130,7 @@ jobs:
             !/docs/Standards/**
 
       - name: Validate compose file
-        run: docker compose --env-file .env.example config
+        run: docker compose --env-file .env.example --profile infra --profile observability --profile apps config
 
   secrets:
     name: Secret Scan

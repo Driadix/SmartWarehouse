@@ -7,8 +7,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$commonScript = Join-Path $PSScriptRoot 'common.ps1'
+. $commonScript
 
-$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
+$repoRoot = Get-RepositoryRoot
 $mapPath = Join-Path $repoRoot 'eng\knowledge-map\build\knowledge-map.json'
 $buildScript = Join-Path $PSScriptRoot 'build-knowledge-map.ps1'
 
@@ -28,7 +30,7 @@ function Normalize-SearchText {
 }
 
 if (-not (Test-Path $mapPath)) {
-  & powershell -ExecutionPolicy Bypass -File $buildScript
+  & $buildScript
   if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
   }

@@ -1,6 +1,9 @@
 {
   "name": "smartwarehouse-tooling",
   "private": true,
+  "engines": {
+    "node": ">=22.22.2 <23"
+  },
   "scripts": {
     "build:knowledge-map": "node ./build-knowledge-map.mjs",
     "validate:examples": "node ./validate-examples.mjs",

@@ -1,6 +1,9 @@
 $ErrorActionPreference = 'Stop'
-$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$toolingDir = Join-Path $repoRoot 'eng\tooling'
+$commonScript = Join-Path $PSScriptRoot 'common.ps1'
+. $commonScript
+
+$repoRoot = Get-RepositoryRoot
+$toolingDir = Get-ToolingDirectory -RepositoryRoot $repoRoot
 
 Push-Location $toolingDir
 try {
