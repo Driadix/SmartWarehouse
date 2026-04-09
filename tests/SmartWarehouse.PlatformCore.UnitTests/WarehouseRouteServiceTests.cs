@@ -98,7 +98,7 @@ public sealed class WarehouseRouteServiceTests
           - edgeId: E4
             fromNodeId: FAST_A
             toNodeId: FAST_B
-            traversalMode: RESTRICTED
+            traversalMode: OPEN
             weight: 1
           - edgeId: E5
             fromNodeId: FAST_B
@@ -136,6 +136,167 @@ public sealed class WarehouseRouteServiceTests
     Assert.Equal(
         ["LOAD_NODE", "FAST_A", "FAST_B", "UNLOAD_NODE"],
         route.NodePath.Select(static nodeId => nodeId.Value).ToArray());
+  }
+
+  [Fact]
+  public void RouteServiceIgnoresRestrictedEdgesWhenAnOpenAlternativeExists()
+  {
+    var topology = CompileYaml(
+        """
+        topologyId: RESTRICTED-BYPASS
+        version: 1
+        levels:
+          - levelId: L1
+            ordinal: 1
+        nodes:
+          - nodeId: LOAD_NODE
+            nodeType: StationNode
+            levelId: L1
+            stationId: LOAD_01
+          - nodeId: RESTRICTED_A
+            nodeType: TravelNode
+            levelId: L1
+          - nodeId: RESTRICTED_B
+            nodeType: TravelNode
+            levelId: L1
+          - nodeId: OPEN_A
+            nodeType: TravelNode
+            levelId: L1
+          - nodeId: UNLOAD_NODE
+            nodeType: StationNode
+            levelId: L1
+            stationId: UNLOAD_01
+        edges:
+          - edgeId: E1
+            fromNodeId: LOAD_NODE
+            toNodeId: RESTRICTED_A
+            traversalMode: OPEN
+            weight: 1
+          - edgeId: E2
+            fromNodeId: RESTRICTED_A
+            toNodeId: RESTRICTED_B
+            traversalMode: RESTRICTED
+            weight: 1
+          - edgeId: E3
+            fromNodeId: RESTRICTED_B
+            toNodeId: UNLOAD_NODE
+            traversalMode: OPEN
+            weight: 1
+          - edgeId: E4
+            fromNodeId: LOAD_NODE
+            toNodeId: OPEN_A
+            traversalMode: OPEN
+            weight: 4
+          - edgeId: E5
+            fromNodeId: OPEN_A
+            toNodeId: UNLOAD_NODE
+            traversalMode: OPEN
+            weight: 4
+        shafts: []
+        stations:
+          - stationId: LOAD_01
+            stationType: LOAD
+            controlMode: PASSIVE
+            attachedNodeId: LOAD_NODE
+            bufferCapacity: 1
+          - stationId: UNLOAD_01
+            stationType: UNLOAD
+            controlMode: PASSIVE
+            attachedNodeId: UNLOAD_NODE
+            bufferCapacity: 1
+        servicePoints: []
+        deviceBindings: []
+        endpointMappings:
+          - endpointId: inbound.main
+            endpointKind: LOAD_STATION
+            stationId: LOAD_01
+          - endpointId: outbound.main
+            endpointKind: UNLOAD_STATION
+            stationId: UNLOAD_01
+        """);
+
+    var route = _routeService.ResolveRoute(
+        topology,
+        new EndpointId("inbound.main"),
+        new EndpointId("outbound.main"));
+
+    Assert.Equal(
+        ["LOAD_NODE", "OPEN_A", "UNLOAD_NODE"],
+        route.NodePath.Select(static nodeId => nodeId.Value).ToArray());
+  }
+
+  [Fact]
+  public void RouteServiceThrowsNoAdmissibleRouteWhenPathRequiresRestrictedEdge()
+  {
+    var topology = CompileYaml(
+        """
+        topologyId: RESTRICTED-ONLY
+        version: 1
+        levels:
+          - levelId: L1
+            ordinal: 1
+        nodes:
+          - nodeId: LOAD_NODE
+            nodeType: StationNode
+            levelId: L1
+            stationId: LOAD_01
+          - nodeId: RESTRICTED_A
+            nodeType: TravelNode
+            levelId: L1
+          - nodeId: RESTRICTED_B
+            nodeType: TravelNode
+            levelId: L1
+          - nodeId: UNLOAD_NODE
+            nodeType: StationNode
+            levelId: L1
+            stationId: UNLOAD_01
+        edges:
+          - edgeId: E1
+            fromNodeId: LOAD_NODE
+            toNodeId: RESTRICTED_A
+            traversalMode: OPEN
+            weight: 1
+          - edgeId: E2
+            fromNodeId: RESTRICTED_A
+            toNodeId: RESTRICTED_B
+            traversalMode: RESTRICTED
+            weight: 1
+          - edgeId: E3
+            fromNodeId: RESTRICTED_B
+            toNodeId: UNLOAD_NODE
+            traversalMode: OPEN
+            weight: 1
+        shafts: []
+        stations:
+          - stationId: LOAD_01
+            stationType: LOAD
+            controlMode: PASSIVE
+            attachedNodeId: LOAD_NODE
+            bufferCapacity: 1
+          - stationId: UNLOAD_01
+            stationType: UNLOAD
+            controlMode: PASSIVE
+            attachedNodeId: UNLOAD_NODE
+            bufferCapacity: 1
+        servicePoints: []
+        deviceBindings: []
+        endpointMappings:
+          - endpointId: inbound.main
+            endpointKind: LOAD_STATION
+            stationId: LOAD_01
+          - endpointId: outbound.main
+            endpointKind: UNLOAD_STATION
+            stationId: UNLOAD_01
+        """);
+
+    var exception = Assert.Throws<NoAdmissibleRouteException>(() => _routeService.ResolveRoute(
+        topology,
+        new EndpointId("inbound.main"),
+        new EndpointId("outbound.main")));
+
+    Assert.Equal("RESTRICTED-ONLY", exception.TopologyId.Value);
+    Assert.Equal("inbound.main", exception.SourceEndpointId.Value);
+    Assert.Equal("outbound.main", exception.TargetEndpointId.Value);
   }
 
   [Fact]

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SmartWarehouse.PlatformCore.Application.Topology;
+using SmartWarehouse.PlatformCore.Domain;
 using SmartWarehouse.PlatformCore.Domain.Primitives;
 using System.Collections.ObjectModel;
 
@@ -139,6 +140,11 @@ public sealed class WarehouseRouteService : IWarehouseRouteService
   {
     foreach (var edge in topology.GetOutgoingEdges(currentNodeId))
     {
+      if (!IsAdmissibleTraversalMode(edge.TraversalMode))
+      {
+        continue;
+      }
+
       yield return new RouteTransition(edge.ToNodeId, edge.Weight);
     }
 
@@ -152,6 +158,9 @@ public sealed class WarehouseRouteService : IWarehouseRouteService
       yield return new RouteTransition(stopByCarrierNode.TransferPointId, ImplicitShaftTransitionWeight);
     }
   }
+
+  private static bool IsAdmissibleTraversalMode(EdgeTraversalMode traversalMode) =>
+      traversalMode is EdgeTraversalMode.Open or EdgeTraversalMode.CarrierOnly;
 
   private readonly record struct RouteTransition(NodeId NodeId, decimal Weight);
 }
