@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using SmartWarehouse.PlatformCore.Application.Contracts;
 using SmartWarehouse.PlatformCore.Application.Northbound;
 using SmartWarehouse.PlatformCore.Application.Topology;
 using SmartWarehouse.PlatformCore.Application.Wes;
@@ -10,6 +11,7 @@ using SmartWarehouse.PlatformCore.Infrastructure.Persistence;
 using SmartWarehouse.PlatformCore.Infrastructure.Persistence.Model;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SmartWarehouse.PlatformCore.Infrastructure.Northbound;
 
@@ -30,6 +32,14 @@ internal sealed class PersistencePayloadTransferJobService(
     CompiledWarehouseTopology topology,
     IPayloadTransferJobPlanner planner) : IPayloadTransferJobService
 {
+  private const string WesProducer = "WES";
+  private const string PlatformEventMessageKind = "PLATFORM_EVENT";
+  private const string JobAggregateType = "Job";
+  private static readonly JsonSerializerOptions ContractJsonSerializerOptions = new(JsonSerializerDefaults.Web)
+  {
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+  };
+
   public async Task<CreatePayloadTransferJobResult> CreateAsync(
       CreatePayloadTransferJobCommand command,
       CancellationToken cancellationToken = default)
@@ -104,6 +114,7 @@ internal sealed class PersistencePayloadTransferJobService(
       JobId = jobRecord.JobId,
       RegisteredAt = now
     });
+    AppendPlatformEvent(CreateJobAcceptedEvent(jobRecord, now));
 
     await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -165,11 +176,13 @@ internal sealed class PersistencePayloadTransferJobService(
       throw CreateCancelNotAllowed();
     }
 
+    var previousState = jobRecord.State;
     var now = DateTimeOffset.UtcNow;
     jobRecord.State = JobState.Cancelled;
     jobRecord.UpdatedAt = now;
     jobRecord.CompletedAt ??= now;
     ApplyProjectionState(jobRecord, projectionRecord);
+    AppendPlatformEvent(CreateJobStateChangedEvent(jobRecord, projectionRecord, previousState, now));
 
     await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -317,6 +330,102 @@ internal sealed class PersistencePayloadTransferJobService(
   }
 
   private static string CreateAssignmentRole(int sequenceNo) => $"PARTICIPANT_{sequenceNo:D2}";
+
+  private void AppendPlatformEvent<TPayload>(CanonicalPlatformEvent<TPayload> platformEvent)
+  {
+    ArgumentNullException.ThrowIfNull(platformEvent);
+
+    dbContext.OutboxMessages.Add(new OutboxMessageRecord
+    {
+      OutboxId = platformEvent.EventId.Value,
+      Producer = WesProducer,
+      MessageKind = PlatformEventMessageKind,
+      AggregateType = JobAggregateType,
+      AggregateId = platformEvent.Envelope.CorrelationId.Value,
+      CorrelationId = platformEvent.Envelope.CorrelationId.Value,
+      CausationId = platformEvent.Envelope.CausationId?.Value,
+      Payload = SerializeOutboxPayload(platformEvent),
+      CreatedAt = platformEvent.OccurredAt
+    });
+    dbContext.PlatformEventJournal.Add(new PlatformEventJournalRecord
+    {
+      EventId = platformEvent.EventId.Value,
+      EventName = platformEvent.EventName,
+      EventVersion = platformEvent.EventVersion,
+      OccurredAt = platformEvent.OccurredAt,
+      CorrelationId = platformEvent.Envelope.CorrelationId.Value,
+      CausationId = platformEvent.Envelope.CausationId?.Value,
+      Visibility = platformEvent.Visibility,
+      Payload = JsonSerializer.Serialize(platformEvent.Payload, ContractJsonSerializerOptions)
+    });
+  }
+
+  private static CanonicalPlatformEvent<JobAcceptedPayload> CreateJobAcceptedEvent(JobRecord jobRecord, DateTimeOffset occurredAt)
+  {
+    ArgumentNullException.ThrowIfNull(jobRecord);
+
+    return new CanonicalPlatformEvent<JobAcceptedPayload>(
+        PayloadTransferJobEventNames.JobAccepted,
+        new ContractEnvelope(
+            new EnvelopeId($"evt-job-accepted-{jobRecord.JobId}"),
+            new SmartWarehouse.PlatformCore.Domain.Primitives.CorrelationId(jobRecord.JobId)),
+        occurredAt,
+        PlatformEventVisibility.Northbound,
+        new JobAcceptedPayload(
+            jobRecord.JobId,
+            jobRecord.ClientOrderId ?? throw new InvalidOperationException(
+                $"Job '{jobRecord.JobId}' does not contain client order identifier for JobAccepted."),
+            PayloadTransferJobContract.ToExternalJobType(jobRecord.JobType),
+            jobRecord.SourceEndpointId,
+            jobRecord.TargetEndpointId,
+            PayloadTransferJobContract.ToExternalState(jobRecord.State),
+            PayloadTransferJobContract.ToExternalPriority(jobRecord.Priority)));
+  }
+
+  private static CanonicalPlatformEvent<JobStateChangedPayload> CreateJobStateChangedEvent(
+      JobRecord jobRecord,
+      PayloadTransferJobProjectionRecord projectionRecord,
+      JobState previousState,
+      DateTimeOffset occurredAt)
+  {
+    ArgumentNullException.ThrowIfNull(jobRecord);
+    ArgumentNullException.ThrowIfNull(projectionRecord);
+
+    var previousExternalState = PayloadTransferJobContract.ToExternalState(previousState);
+    var newExternalState = PayloadTransferJobContract.ToExternalState(jobRecord.State);
+
+    return new CanonicalPlatformEvent<JobStateChangedPayload>(
+        PayloadTransferJobEventNames.JobStateChanged,
+        new ContractEnvelope(
+            new EnvelopeId(
+                $"evt-job-state-changed-{jobRecord.JobId}-{previousExternalState.ToLowerInvariant()}-{newExternalState.ToLowerInvariant()}"),
+            new SmartWarehouse.PlatformCore.Domain.Primitives.CorrelationId(jobRecord.JobId)),
+        occurredAt,
+        PlatformEventVisibility.Northbound,
+        new JobStateChangedPayload(
+            jobRecord.JobId,
+            previousExternalState,
+            newExternalState,
+            projectionRecord.ReasonCode,
+            projectionRecord.LastExecutionTaskId));
+  }
+
+  private static string SerializeOutboxPayload<TPayload>(CanonicalPlatformEvent<TPayload> platformEvent)
+  {
+    ArgumentNullException.ThrowIfNull(platformEvent);
+
+    return JsonSerializer.Serialize(
+        new StoredPlatformEventEnvelope<TPayload>(
+            platformEvent.EventId.Value,
+            platformEvent.EventName,
+            platformEvent.EventVersion.Value,
+            platformEvent.OccurredAt,
+            platformEvent.Envelope.CorrelationId.Value,
+            platformEvent.Envelope.CausationId?.Value,
+            platformEvent.Visibility.ToString(),
+            platformEvent.Payload),
+        ContractJsonSerializerOptions);
+  }
 
   private static string ComputeRequestHash(CreatePayloadTransferJobCommand command)
   {
@@ -471,4 +580,14 @@ internal sealed class PersistencePayloadTransferJobService(
 
     return value.Trim();
   }
+
+  private sealed record StoredPlatformEventEnvelope<TPayload>(
+      string EventId,
+      string EventName,
+      string EventVersion,
+      DateTimeOffset OccurredAt,
+      string CorrelationId,
+      string? CausationId,
+      string Visibility,
+      TPayload Payload);
 }

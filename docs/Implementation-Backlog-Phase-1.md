@@ -49,7 +49,7 @@
 | `status` | `BACKLOG` |
 | `startedAt` | — |
 | `owner` | — |
-| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-017`. |
+| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-018`. |
 
 ---
 
@@ -79,6 +79,7 @@
 | 2026-04-09 | `P1-014` | Реализованы нормализация тела и идемпотентность по `clientOrderId`. | `Northbound` create-flow теперь вычисляет нормализованный hash тела, использует `integration.northbound_idempotency`, возвращает `200 OK` и тот же `jobId` для эквивалентного повторного запроса, а конфликтный повтор отклоняет с `409 IDEMPOTENCY_CONFLICT`; это закреплено integration-проверками на работающем приложении. |
 | 2026-04-09 | `P1-015` | Реализованы `Job` aggregate и planner `WES`, который режет маршрут на `Navigate`, `StationTransfer`, `CarrierTransfer`. | После принятия `PayloadTransferJob` в `wes` теперь атомарно сохраняются `jobs`, `job_route_segments`, `execution_task_plans` и `resource_assignments`; planner строит канонический план по compiled topology, а внешнее состояние API остаётся `ACCEPTED` до подтверждённого старта исполнения. |
 | 2026-04-09 | `P1-016` | Реализована проекция `projection.payload_transfer_jobs` и чтение `Northbound API` только из неё. | Create/cancel flow синхронно обновляет read-model в схеме `projection`, добавлена миграция на поля контракта `Northbound API v0`, а integration-проверки подтверждают, что `GET by jobId` и `GET by clientOrderId` читают проекцию, а не прямую модель записи `wes.jobs`. |
+| 2026-04-09 | `P1-017` | Реализована атомарная публикация верхних событий `JobAccepted` и `JobStateChanged`. | Create/cancel flow теперь одновременно записывает канонические события в `integration.outbox_messages` и `audit.platform_event_journal`, идемпотентные повторы не создают второй `JobAccepted`, а integration-проверки фиксируют состав и порядок событий. |
 
 ---
 
@@ -130,7 +131,7 @@
 | `P1-014` | `platform-core/northbound` | Реализовать нормализацию тела и идемпотентность по `clientOrderId`. | `DONE` | `P1-013`, `P1-006` | Повтор эквивалентного запроса возвращает тот же `jobId`, конфликтный повтор даёт `409`. |
 | `P1-015` | `platform-core/wes` | Реализовать `Job` aggregate и planner, который режет маршрут на `Navigate`, `StationTransfer`, `CarrierTransfer`. | `DONE` | `P1-012`, `P1-013` | После принятия задания создаётся план из канонических `ExecutionTask`. |
 | `P1-016` | `platform-core/projection` | Реализовать проекцию `projection.payload_transfer_jobs` и чтение API только из неё. | `DONE` | `P1-013`, `P1-014`, `P1-015` | Чтение состояния задания не опирается на прямое чтение модели записи `WES`. |
-| `P1-017` | `platform-core/events` | Реализовать публикацию `JobAccepted` и `JobStateChanged` в `outbox` и `audit.platform_event_journal`. | `BACKLOG` | `P1-015`, `P1-016` | Верхние события публикуются атомарно вместе с изменением состояния. |
+| `P1-017` | `platform-core/events` | Реализовать публикацию `JobAccepted` и `JobStateChanged` в `outbox` и `audit.platform_event_journal`. | `DONE` | `P1-015`, `P1-016` | Верхние события публикуются атомарно вместе с изменением состояния. |
 
 ### 6.5. Контур исполнения `WCS`
 
@@ -193,8 +194,8 @@
 6. `P1-014`
 7. `P1-015`
 8. `P1-016`
-9. `P1-017`
-10. `P1-018`
+9. `P1-018`
+10. `P1-019`
 11. `P1-020`
 12. `P1-025`
 13. `P1-026`
@@ -206,4 +207,4 @@
 
 - Мягкий архитектурный риск на старте: `DomainModel-v0` пока имеет статус draft, поэтому `P1-001` желательно закрыть первым.
 - Отсутствие кода в `digital-twin-ui` и `edge-integration-host` не блокирует старт ядра, но эти контуры нельзя забывать при стабилизации фазы 1.
-- После закрытия `P1-016` следующий рекомендуемый шаг — `P1-017`: реализовать публикацию `JobAccepted` и `JobStateChanged` в `outbox` и `audit.platform_event_journal`.
+- После закрытия `P1-017` следующий рекомендуемый шаг — `P1-018`: реализовать runtime-модель `ExecutionTask` и её state machine.

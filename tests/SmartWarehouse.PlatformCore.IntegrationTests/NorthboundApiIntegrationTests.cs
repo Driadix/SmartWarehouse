@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using SmartWarehouse.PlatformCore.Application.Contracts;
 using SmartWarehouse.PlatformCore.Domain;
 using SmartWarehouse.PlatformCore.Host;
 using SmartWarehouse.PlatformCore.Infrastructure.Persistence;
@@ -65,6 +66,8 @@ public sealed class NorthboundApiIntegrationTests
 
     var initialPlan = await LoadPlanningSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
     var initialProjection = await LoadProjectionSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
+    var initialOutboxMessages = await LoadOutboxSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
+    var initialPlatformEvents = await LoadPlatformEventSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
 
     Assert.Equal(JobState.Planned, initialPlan.Job.State);
     Assert.Equal(JobState.Planned, initialProjection.State);
@@ -176,6 +179,46 @@ public sealed class NorthboundApiIntegrationTests
           Assert.Equal("StationBoundary", assignment.ResourceType);
           Assert.Equal("UNLOAD_01", assignment.ResourceId);
         });
+    Assert.Single(initialOutboxMessages);
+    Assert.Single(initialPlatformEvents);
+
+    var acceptedOutboxMessage = initialOutboxMessages[0];
+    var acceptedPlatformEvent = initialPlatformEvents[0];
+    Assert.Equal("WES", acceptedOutboxMessage.Producer);
+    Assert.Equal("PLATFORM_EVENT", acceptedOutboxMessage.MessageKind);
+    Assert.Equal("Job", acceptedOutboxMessage.AggregateType);
+    Assert.Equal(createdJob.JobId, acceptedOutboxMessage.AggregateId);
+    Assert.Equal(createdJob.JobId, acceptedOutboxMessage.CorrelationId);
+    Assert.Equal(initialPlan.Job.CreatedAt, acceptedOutboxMessage.CreatedAt);
+    Assert.Null(acceptedOutboxMessage.PublishedAt);
+    Assert.Equal(PayloadTransferJobEventNames.JobAccepted, acceptedPlatformEvent.EventName);
+    Assert.Equal(createdJob.JobId, acceptedPlatformEvent.CorrelationId);
+    Assert.Equal(initialPlan.Job.CreatedAt, acceptedPlatformEvent.OccurredAt);
+    Assert.Equal(PlatformEventVisibility.Northbound, acceptedPlatformEvent.Visibility);
+
+    var acceptedOutboxPayload = ParseOutboxPayload(acceptedOutboxMessage.Payload);
+    Assert.Equal(acceptedPlatformEvent.EventId, acceptedOutboxPayload.EventId);
+    Assert.Equal(PayloadTransferJobEventNames.JobAccepted, acceptedOutboxPayload.EventName);
+    Assert.Equal("v0", acceptedOutboxPayload.EventVersion);
+    Assert.Equal(createdJob.JobId, acceptedOutboxPayload.CorrelationId);
+    Assert.Equal("Northbound", acceptedOutboxPayload.Visibility);
+    Assert.Equal(createdJob.JobId, acceptedOutboxPayload.Payload.GetProperty("jobId").GetString());
+    Assert.Equal("WMS-12345", acceptedOutboxPayload.Payload.GetProperty("clientOrderId").GetString());
+    Assert.Equal("PAYLOAD_TRANSFER", acceptedOutboxPayload.Payload.GetProperty("jobType").GetString());
+    Assert.Equal("inbound.main", acceptedOutboxPayload.Payload.GetProperty("sourceEndpoint").GetString());
+    Assert.Equal("outbound.main", acceptedOutboxPayload.Payload.GetProperty("targetEndpoint").GetString());
+    Assert.Equal("ACCEPTED", acceptedOutboxPayload.Payload.GetProperty("state").GetString());
+    Assert.Equal("NORMAL", acceptedOutboxPayload.Payload.GetProperty("priority").GetString());
+
+    using (var acceptedJournalDocument = JsonDocument.Parse(acceptedPlatformEvent.Payload))
+    {
+      var acceptedJournalPayload = acceptedJournalDocument.RootElement;
+      Assert.Equal(createdJob.JobId, acceptedJournalPayload.GetProperty("jobId").GetString());
+      Assert.Equal("WMS-12345", acceptedJournalPayload.GetProperty("clientOrderId").GetString());
+      Assert.Equal("PAYLOAD_TRANSFER", acceptedJournalPayload.GetProperty("jobType").GetString());
+      Assert.Equal("ACCEPTED", acceptedJournalPayload.GetProperty("state").GetString());
+      Assert.Equal("NORMAL", acceptedJournalPayload.GetProperty("priority").GetString());
+    }
 
     using var getByIdResponse = await client.GetAsync($"/api/v0/payload-transfer-jobs/{createdJob.JobId}");
     Assert.Equal(HttpStatusCode.OK, getByIdResponse.StatusCode);
@@ -201,11 +244,15 @@ public sealed class NorthboundApiIntegrationTests
 
     var repeatedPlan = await LoadPlanningSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
     var repeatedProjection = await LoadProjectionSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
+    var repeatedOutboxMessages = await LoadOutboxSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
+    var repeatedPlatformEvents = await LoadPlatformEventSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
     Assert.Equal(initialPlan.RouteSegments.Count, repeatedPlan.RouteSegments.Count);
     Assert.Equal(initialPlan.TaskPlans.Count, repeatedPlan.TaskPlans.Count);
     Assert.Equal(initialPlan.ResourceAssignments.Count, repeatedPlan.ResourceAssignments.Count);
     Assert.Equal(initialProjection.CreatedAt, repeatedProjection.CreatedAt);
     Assert.Equal(initialProjection.LastUpdatedAt, repeatedProjection.LastUpdatedAt);
+    Assert.Single(repeatedOutboxMessages);
+    Assert.Single(repeatedPlatformEvents);
 
     using var cancelResponse = await client.PostAsync($"/api/v0/payload-transfer-jobs/{createdJob.JobId}/cancel", content: null);
     Assert.Equal(HttpStatusCode.Accepted, cancelResponse.StatusCode);
@@ -217,8 +264,39 @@ public sealed class NorthboundApiIntegrationTests
     Assert.NotNull(cancelledJob.CompletedAt);
 
     var cancelledProjection = await LoadProjectionSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
+    var cancelledOutboxMessages = await LoadOutboxSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
+    var cancelledPlatformEvents = await LoadPlatformEventSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
     Assert.Equal(JobState.Cancelled, cancelledProjection.State);
     Assert.NotNull(cancelledProjection.CompletedAt);
+    Assert.Equal(2, cancelledOutboxMessages.Count);
+    Assert.Equal(2, cancelledPlatformEvents.Count);
+
+    var stateChangedOutbox = cancelledOutboxMessages[1];
+    var stateChangedPlatformEvent = cancelledPlatformEvents[1];
+    Assert.Equal(PayloadTransferJobEventNames.JobStateChanged, stateChangedPlatformEvent.EventName);
+    Assert.Equal(createdJob.JobId, stateChangedPlatformEvent.CorrelationId);
+    Assert.Equal(PlatformEventVisibility.Northbound, stateChangedPlatformEvent.Visibility);
+
+    var stateChangedOutboxPayload = ParseOutboxPayload(stateChangedOutbox.Payload);
+    Assert.Equal(PayloadTransferJobEventNames.JobStateChanged, stateChangedOutboxPayload.EventName);
+    Assert.Equal("v0", stateChangedOutboxPayload.EventVersion);
+    Assert.Equal(createdJob.JobId, stateChangedOutboxPayload.CorrelationId);
+    Assert.Equal("Northbound", stateChangedOutboxPayload.Visibility);
+    Assert.Equal(createdJob.JobId, stateChangedOutboxPayload.Payload.GetProperty("jobId").GetString());
+    Assert.Equal("ACCEPTED", stateChangedOutboxPayload.Payload.GetProperty("previousState").GetString());
+    Assert.Equal("CANCELLED", stateChangedOutboxPayload.Payload.GetProperty("newState").GetString());
+    Assert.False(stateChangedOutboxPayload.Payload.TryGetProperty("reasonCode", out _));
+    Assert.False(stateChangedOutboxPayload.Payload.TryGetProperty("activeExecutionTaskId", out _));
+
+    using (var stateChangedJournalDocument = JsonDocument.Parse(stateChangedPlatformEvent.Payload))
+    {
+      var stateChangedJournalPayload = stateChangedJournalDocument.RootElement;
+      Assert.Equal(createdJob.JobId, stateChangedJournalPayload.GetProperty("jobId").GetString());
+      Assert.Equal("ACCEPTED", stateChangedJournalPayload.GetProperty("previousState").GetString());
+      Assert.Equal("CANCELLED", stateChangedJournalPayload.GetProperty("newState").GetString());
+      Assert.False(stateChangedJournalPayload.TryGetProperty("reasonCode", out _));
+      Assert.False(stateChangedJournalPayload.TryGetProperty("activeExecutionTaskId", out _));
+    }
 
     using var repeatCancelResponse = await client.PostAsync($"/api/v0/payload-transfer-jobs/{createdJob.JobId}/cancel", content: null);
     Assert.Equal(HttpStatusCode.OK, repeatCancelResponse.StatusCode);
@@ -226,6 +304,11 @@ public sealed class NorthboundApiIntegrationTests
 
     Assert.NotNull(repeatCancelledJob);
     Assert.Equal("CANCELLED", repeatCancelledJob.State);
+
+    var repeatedCancelledOutboxMessages = await LoadOutboxSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
+    var repeatedCancelledPlatformEvents = await LoadPlatformEventSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
+    Assert.Equal(2, repeatedCancelledOutboxMessages.Count);
+    Assert.Equal(2, repeatedCancelledPlatformEvents.Count);
   }
 
   [Fact]
@@ -495,6 +578,44 @@ public sealed class NorthboundApiIntegrationTests
         .SingleAsync(record => record.JobId == jobId);
   }
 
+  private static async Task<IReadOnlyList<OutboxMessageRecord>> LoadOutboxSnapshotAsync(string connectionString, string jobId)
+  {
+    await using var context = CreateContext(connectionString);
+
+    return await context.Set<OutboxMessageRecord>()
+        .AsNoTracking()
+        .Where(record => record.AggregateType == "Job" && record.AggregateId == jobId)
+        .OrderBy(record => record.CreatedAt)
+        .ThenBy(record => record.OutboxId)
+        .ToListAsync();
+  }
+
+  private static async Task<IReadOnlyList<PlatformEventJournalRecord>> LoadPlatformEventSnapshotAsync(string connectionString, string jobId)
+  {
+    await using var context = CreateContext(connectionString);
+
+    return await context.Set<PlatformEventJournalRecord>()
+        .AsNoTracking()
+        .Where(record => record.CorrelationId == jobId)
+        .OrderBy(record => record.OccurredAt)
+        .ThenBy(record => record.EventId)
+        .ToListAsync();
+  }
+
+  private static StoredPlatformEventEnvelope ParseOutboxPayload(string payload)
+  {
+    using var document = JsonDocument.Parse(payload);
+    var root = document.RootElement;
+
+    return new StoredPlatformEventEnvelope(
+        root.GetProperty("eventId").GetString()!,
+        root.GetProperty("eventName").GetString()!,
+        root.GetProperty("eventVersion").GetString()!,
+        root.GetProperty("correlationId").GetString()!,
+        root.GetProperty("visibility").GetString()!,
+        root.GetProperty("payload").Clone());
+  }
+
   private static PlatformCoreDbContext CreateContext(string connectionString)
   {
     var options = new DbContextOptionsBuilder<PlatformCoreDbContext>()
@@ -578,4 +699,12 @@ public sealed class NorthboundApiIntegrationTests
       IReadOnlyList<JobRouteSegmentRecord> RouteSegments,
       IReadOnlyList<ExecutionTaskPlanRecord> TaskPlans,
       IReadOnlyList<ResourceAssignmentRecord> ResourceAssignments);
+
+  private sealed record StoredPlatformEventEnvelope(
+      string EventId,
+      string EventName,
+      string EventVersion,
+      string CorrelationId,
+      string Visibility,
+      JsonElement Payload);
 }

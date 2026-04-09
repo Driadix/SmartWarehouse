@@ -194,6 +194,15 @@ public static class PayloadTransferJobContract
         _ => throw new InvalidOperationException($"Job priority '{priority}' is not exposed by Northbound API v0.")
       };
 
+  public static string ToExternalJobType(JobType jobType) =>
+      jobType switch
+      {
+        JobType.PayloadTransfer => "PAYLOAD_TRANSFER",
+        JobType.Charge => "CHARGE",
+        JobType.Relocation => "RELOCATION",
+        _ => throw new InvalidOperationException($"Job type '{jobType}' is not exposed by Northbound API v0.")
+      };
+
   public static bool TryParsePriority(string? value, out JobPriority priority)
   {
     if (string.IsNullOrWhiteSpace(value))
