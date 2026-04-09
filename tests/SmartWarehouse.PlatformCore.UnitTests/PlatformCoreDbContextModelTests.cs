@@ -109,6 +109,10 @@ public sealed class PlatformCoreDbContextModelTests
     AssertProperty(payloadTransferJobProjection, nameof(PayloadTransferJobProjectionRecord.CreatedAt));
     AssertProperty(payloadTransferJobProjection, nameof(PayloadTransferJobProjectionRecord.CompletedAt));
     AssertIndex(payloadTransferJobProjection, isUnique: true, nameof(PayloadTransferJobProjectionRecord.ClientOrderId));
+
+    var executionTaskRuntime = AssertEntity<ExecutionTaskRuntimeRecord>(context);
+    AssertProperty(executionTaskRuntime, nameof(ExecutionTaskRuntimeRecord.ParticipantRefs), columnType: "jsonb");
+    AssertProperty(executionTaskRuntime, nameof(ExecutionTaskRuntimeRecord.ReasonCode), maxLength: 128);
   }
 
   [Fact]

@@ -20,6 +20,8 @@ public sealed class ExecutionTaskRuntimeRecord
 
   public string AssigneeId { get; set; } = null!;
 
+  public string ParticipantRefs { get; set; } = "[]";
+
   public string? SourceNodeId { get; set; }
 
   public string? TargetNodeId { get; set; }
@@ -29,6 +31,12 @@ public sealed class ExecutionTaskRuntimeRecord
   public string CorrelationId { get; set; } = null!;
 
   public string? ActiveRuntimePhase { get; set; }
+
+  public string? ReasonCode { get; set; }
+
+  public ExecutionResolutionHint? ResolutionHint { get; set; }
+
+  public bool? ReplanRequired { get; set; }
 }
 
 public sealed class ReservationRecord
@@ -141,11 +149,14 @@ internal static class WcsSchemaModel
       builder.Property(x => x.State).HasConversion<string>().HasMaxLength(32);
       builder.Property(x => x.AssigneeType).HasMaxLength(32);
       builder.Property(x => x.AssigneeId).HasMaxLength(128);
+      builder.Property(x => x.ParticipantRefs).HasColumnType("jsonb");
       builder.Property(x => x.SourceNodeId).HasMaxLength(128);
       builder.Property(x => x.TargetNodeId).HasMaxLength(128);
       builder.Property(x => x.TransferMode).HasConversion<string>().HasMaxLength(64);
       builder.Property(x => x.CorrelationId).HasMaxLength(128);
       builder.Property(x => x.ActiveRuntimePhase).HasMaxLength(64);
+      builder.Property(x => x.ReasonCode).HasMaxLength(128);
+      builder.Property(x => x.ResolutionHint).HasConversion<string>().HasMaxLength(32);
 
       builder.HasIndex(x => x.JobId);
       builder.HasIndex(x => x.CorrelationId).IsUnique();

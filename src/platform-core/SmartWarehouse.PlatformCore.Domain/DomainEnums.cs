@@ -44,6 +44,13 @@ public enum ExecutionTaskState
   Cancelled
 }
 
+public enum ExecutionResolutionHint
+{
+  WaitAndRetry,
+  ReplanRequired,
+  OperatorAttention
+}
+
 public enum DeviceFamily
 {
   Shuttle3D,

@@ -33,6 +33,17 @@ public readonly record struct ReasonCode
   public static implicit operator string(ReasonCode value) => value.Value;
 }
 
+public readonly record struct RuntimePhase
+{
+  public RuntimePhase(string value) => Value = DomainGuard.NotWhiteSpace(value, nameof(value));
+
+  public string Value { get; }
+
+  public override string ToString() => Value;
+
+  public static implicit operator string(RuntimePhase value) => value.Value;
+}
+
 public readonly record struct FaultCode
 {
   public FaultCode(string value) => Value = DomainGuard.NotWhiteSpace(value, nameof(value));

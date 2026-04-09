@@ -115,4 +115,17 @@ public sealed class ExecutionTask
   public ExecutionTaskState State { get; }
 
   public CorrelationId CorrelationId { get; }
+
+  public ExecutionTask WithState(ExecutionTaskState state) =>
+      new(
+          TaskId,
+          JobId,
+          Assignee,
+          ParticipantRefs,
+          TaskType,
+          state,
+          CorrelationId,
+          SourceNode,
+          TargetNode,
+          TransferMode);
 }
