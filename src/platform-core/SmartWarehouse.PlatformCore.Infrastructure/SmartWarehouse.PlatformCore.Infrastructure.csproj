@@ -6,6 +6,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <ProjectReference Include="..\SmartWarehouse.PlatformCore.Domain\SmartWarehouse.PlatformCore.Domain.csproj" />
     <ProjectReference Include="..\SmartWarehouse.PlatformCore.Application\SmartWarehouse.PlatformCore.Application.csproj" />

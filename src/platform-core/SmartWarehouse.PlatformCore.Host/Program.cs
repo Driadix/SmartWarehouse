@@ -11,6 +11,7 @@ using SmartWarehouse.PlatformCore.Host.Northbound;
 using SmartWarehouse.PlatformCore.Host.Topology;
 using SmartWarehouse.PlatformCore.Infrastructure.Northbound;
 using SmartWarehouse.PlatformCore.Infrastructure.Persistence;
+using SmartWarehouse.PlatformCore.Infrastructure.Wcs;
 
 namespace SmartWarehouse.PlatformCore.Host;
 
@@ -51,6 +52,7 @@ public class Program
     builder.Services.AddWarehouseRouteService();
     builder.Services.AddPayloadTransferJobPlanner();
     builder.Services.AddPayloadTransferJobService();
+    builder.Services.AddPersistenceWcsOperationalStateStore();
 
     builder.Logging.AddOpenTelemetry(options =>
     {

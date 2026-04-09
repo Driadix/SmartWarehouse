@@ -116,6 +116,38 @@ public sealed class PlatformCoreDbContextModelTests
   }
 
   [Fact]
+  public void WcsOperationalTablesPreserveRuntimeSpecificFields()
+  {
+    using var context = CreateContext();
+
+    var reservation = AssertEntity<ReservationRecord>(context);
+    AssertProperty(reservation, nameof(ReservationRecord.ReservedNodeIds), columnType: "text[]");
+    AssertIndex(reservation, isUnique: false, nameof(ReservationRecord.OwnerType), nameof(ReservationRecord.OwnerId));
+
+    var deviceSession = AssertEntity<DeviceSessionRecord>(context);
+    AssertProperty(deviceSession, nameof(DeviceSessionRecord.State), maxLength: 64);
+    AssertIndex(deviceSession, isUnique: true, nameof(DeviceSessionRecord.DeviceId));
+
+    var deviceShadow = AssertEntity<DeviceShadowRecord>(context);
+    AssertProperty(deviceShadow, nameof(DeviceShadowRecord.StaticCapabilities), columnType: "text[]");
+    AssertProperty(deviceShadow, nameof(DeviceShadowRecord.ActiveCapabilities), columnType: "text[]");
+    AssertProperty(deviceShadow, nameof(DeviceShadowRecord.HealthState), maxLength: 64);
+    AssertIndex(deviceShadow, isUnique: false, nameof(DeviceShadowRecord.DeviceFamily));
+    AssertIndex(deviceShadow, isUnique: false, nameof(DeviceShadowRecord.CurrentNodeId));
+
+    var fault = AssertEntity<FaultRecord>(context);
+    AssertProperty(fault, nameof(FaultRecord.FaultCode), maxLength: 128);
+    AssertProperty(fault, nameof(FaultRecord.Severity), maxLength: 64);
+    AssertIndex(fault, isUnique: false, nameof(FaultRecord.SourceType), nameof(FaultRecord.SourceId), nameof(FaultRecord.State));
+
+    var stationState = AssertEntity<StationBoundaryStateRecord>(context);
+    AssertProperty(stationState, nameof(StationBoundaryStateRecord.AttachedNodeId), maxLength: 128);
+    AssertProperty(stationState, nameof(StationBoundaryStateRecord.CurrentPayloadId), maxLength: 128);
+    AssertIndex(stationState, isUnique: true, nameof(StationBoundaryStateRecord.AttachedNodeId));
+    AssertIndex(stationState, isUnique: false, nameof(StationBoundaryStateRecord.Readiness));
+  }
+
+  [Fact]
   public void AddPlatformCorePersistenceRegistersDbContext()
   {
     var services = new ServiceCollection();
