@@ -49,7 +49,7 @@
 | `status` | `BACKLOG` |
 | `startedAt` | — |
 | `owner` | — |
-| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-013`. |
+| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-015`. |
 
 ---
 
@@ -75,6 +75,8 @@
 | 2026-04-06 | `P1-010` | Реализован валидатор статических инвариантов конфигурации топологии. | В `SmartWarehouse.PlatformCore.Application.Topology` появился отдельный валидатор с накоплением нарушений ссылочной целостности и графовых ограничений для станций, сервисных точек, шахт, `CarrierNode`, рёбер `CARRIER_ONLY`, привязок устройств и конечных точек; `warehouse-a.nominal.yaml` и `warehouse-a.no-route.yaml` проходят структурную валидацию, а детальные unit-тесты покрывают сложные и краевые случаи до старта исполнения. |
 | 2026-04-06 | `P1-011` | Реализован topology compiler с runtime-моделью compiled topology и устойчивыми lookup-индексами. | В `SmartWarehouse.PlatformCore.Application.Topology` появились `CompiledWarehouseTopology`, `WarehouseTopologyCompiler` и DI-регистрация, которые после валидации собирают endpoint-resolution по `endpointId`, станции, сервисные точки, узлы, рёбра, шахты, остановы и привязки устройств в единое runtime-представление; unit-тесты покрывают nominal, disconnected, alias-адреса, неизвестные endpoint'ы и несовместимые `endpointKind`. |
 | 2026-04-06 | `P1-012` | Реализован базовый сервис маршрутизации `WES` поверх compiled topology и нормативная ошибка `NO_ADMISSIBLE_ROUTE`. | В `SmartWarehouse.PlatformCore.Application.Wes` появились `IWarehouseRouteService`, `WarehouseRouteService`, DI-регистрация и `NoAdmissibleRouteException`; сервис строит взвешенный `PlannedRoute` между `endpointId`, учитывает направленные рёбра графа и обязательные переходы `TransferPoint <-> CarrierNode` внутри шахты, а unit-тесты покрывают nominal, disconnected, выбор минимального веса, псевдонимы одной точки, неизвестные endpoint'ы и DI. |
+| 2026-04-09 | `P1-013` | Реализован исполняемый HTTP-контракт `Northbound API v0` для `PayloadTransferJob`. | В `platform-core/host` появились endpoints `POST job`, `GET by jobId`, `GET by clientOrderId`, `POST cancel`, единый `Problem`-payload и загрузка активной `Topology Configuration` из фазового YAML; интеграционные тесты поднимают реальный HTTP runtime и подтверждают nominal-сценарий, чтение, отмену и нормативные отрицательные ответы. |
+| 2026-04-09 | `P1-014` | Реализованы нормализация тела и идемпотентность по `clientOrderId`. | `Northbound` create-flow теперь вычисляет нормализованный hash тела, использует `integration.northbound_idempotency`, возвращает `200 OK` и тот же `jobId` для эквивалентного повторного запроса, а конфликтный повтор отклоняет с `409 IDEMPOTENCY_CONFLICT`; это закреплено integration-проверками на работающем приложении. |
 
 ---
 
@@ -122,8 +124,8 @@
 
 | TaskId | Контур | Задача | Статус | Зависит от | Критерий готовности |
 |---|---|---|---|---|---|
-| `P1-013` | `platform-core/northbound` | Реализовать HTTP-операции `POST job`, `GET by jobId`, `GET by clientOrderId`, `POST cancel`. | `BACKLOG` | `P1-012` | `Northbound API v0` доступен как исполняемый HTTP-контракт. |
-| `P1-014` | `platform-core/northbound` | Реализовать нормализацию тела и идемпотентность по `clientOrderId`. | `BACKLOG` | `P1-013`, `P1-006` | Повтор эквивалентного запроса возвращает тот же `jobId`, конфликтный повтор даёт `409`. |
+| `P1-013` | `platform-core/northbound` | Реализовать HTTP-операции `POST job`, `GET by jobId`, `GET by clientOrderId`, `POST cancel`. | `DONE` | `P1-012` | `Northbound API v0` доступен как исполняемый HTTP-контракт. |
+| `P1-014` | `platform-core/northbound` | Реализовать нормализацию тела и идемпотентность по `clientOrderId`. | `DONE` | `P1-013`, `P1-006` | Повтор эквивалентного запроса возвращает тот же `jobId`, конфликтный повтор даёт `409`. |
 | `P1-015` | `platform-core/wes` | Реализовать `Job` aggregate и planner, который режет маршрут на `Navigate`, `StationTransfer`, `CarrierTransfer`. | `BACKLOG` | `P1-012`, `P1-013` | После принятия задания создаётся план из канонических `ExecutionTask`. |
 | `P1-016` | `platform-core/projection` | Реализовать проекцию `projection.payload_transfer_jobs` и чтение API только из неё. | `BACKLOG` | `P1-013`, `P1-014`, `P1-015` | Чтение состояния задания не опирается на прямое чтение модели записи `WES`. |
 | `P1-017` | `platform-core/events` | Реализовать публикацию `JobAccepted` и `JobStateChanged` в `outbox` и `audit.platform_event_journal`. | `BACKLOG` | `P1-015`, `P1-016` | Верхние события публикуются атомарно вместе с изменением состояния. |
@@ -202,4 +204,4 @@
 
 - Мягкий архитектурный риск на старте: `DomainModel-v0` пока имеет статус draft, поэтому `P1-001` желательно закрыть первым.
 - Отсутствие кода в `digital-twin-ui` и `edge-integration-host` не блокирует старт ядра, но эти контуры нельзя забывать при стабилизации фазы 1.
-- После закрытия `P1-012` следующий рекомендуемый шаг — `P1-013`: реализовать HTTP-операции `POST job`, `GET by jobId`, `GET by clientOrderId`, `POST cancel`.
+- После закрытия `P1-014` следующий рекомендуемый шаг — `P1-015`: реализовать `Job` aggregate и planner, который режет маршрут на `Navigate`, `StationTransfer`, `CarrierTransfer`.

@@ -90,6 +90,15 @@ public sealed class PlatformCoreDbContextModelTests
     AssertProperty(endpointMapping, nameof(EndpointMappingRecord.EndpointKind), maxLength: 64);
     AssertProperty(endpointMapping, nameof(EndpointMappingRecord.StationId), maxLength: 128);
     AssertProperty(endpointMapping, nameof(EndpointMappingRecord.ServicePointId), maxLength: 128);
+
+    var job = AssertEntity<JobRecord>(context);
+    AssertProperty(job, nameof(JobRecord.ClientOrderId), maxLength: 128);
+    AssertProperty(job, nameof(JobRecord.ReasonCode), maxLength: 128);
+    AssertProperty(job, nameof(JobRecord.ReasonMessage), maxLength: 1024);
+    AssertProperty(job, nameof(JobRecord.CreatedAt));
+    AssertProperty(job, nameof(JobRecord.UpdatedAt));
+    AssertProperty(job, nameof(JobRecord.CompletedAt));
+    AssertIndex(job, isUnique: true, nameof(JobRecord.ClientOrderId));
   }
 
   [Fact]

@@ -8,6 +8,8 @@ public sealed class JobRecord
 {
   public string JobId { get; set; } = null!;
 
+  public string ClientOrderId { get; set; } = null!;
+
   public JobType JobType { get; set; }
 
   public string? PayloadId { get; set; }
@@ -19,6 +21,20 @@ public sealed class JobRecord
   public JobState State { get; set; }
 
   public JobPriority Priority { get; set; }
+
+  public string? PayloadRef { get; set; }
+
+  public string? Attributes { get; set; }
+
+  public string? ReasonCode { get; set; }
+
+  public string? ReasonMessage { get; set; }
+
+  public DateTimeOffset CreatedAt { get; set; }
+
+  public DateTimeOffset UpdatedAt { get; set; }
+
+  public DateTimeOffset? CompletedAt { get; set; }
 }
 
 public sealed class ExecutionTaskPlanRecord
@@ -78,13 +94,17 @@ internal static class WesSchemaModel
       builder.HasKey(x => x.JobId);
 
       builder.Property(x => x.JobId).HasMaxLength(128);
+      builder.Property(x => x.ClientOrderId).HasMaxLength(128);
       builder.Property(x => x.JobType).HasConversion<string>().HasMaxLength(32);
       builder.Property(x => x.PayloadId).HasMaxLength(128);
       builder.Property(x => x.SourceEndpointId).HasMaxLength(128);
       builder.Property(x => x.TargetEndpointId).HasMaxLength(128);
       builder.Property(x => x.State).HasConversion<string>().HasMaxLength(32);
       builder.Property(x => x.Priority).HasConversion<string>().HasMaxLength(32);
+      builder.Property(x => x.ReasonCode).HasMaxLength(128);
+      builder.Property(x => x.ReasonMessage).HasMaxLength(1024);
 
+      builder.HasIndex(x => x.ClientOrderId).IsUnique();
       builder.HasIndex(x => x.PayloadId);
       builder.HasIndex(x => new { x.State, x.Priority });
     });

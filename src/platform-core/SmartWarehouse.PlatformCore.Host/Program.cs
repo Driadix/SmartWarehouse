@@ -1,10 +1,15 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using SmartWarehouse.PlatformCore.Application.Wes;
 using SmartWarehouse.PlatformCore.Host.HealthChecks;
+using SmartWarehouse.PlatformCore.Host.Northbound;
+using SmartWarehouse.PlatformCore.Host.Topology;
+using SmartWarehouse.PlatformCore.Infrastructure.Northbound;
 using SmartWarehouse.PlatformCore.Infrastructure.Persistence;
 
 namespace SmartWarehouse.PlatformCore.Host;
@@ -19,11 +24,32 @@ public class Program
     var otlpEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
     var serviceName = builder.Configuration["OTEL_SERVICE_NAME"] ?? "platform-core";
     var serviceVersion = typeof(Program).Assembly.GetName().Version?.ToString() ?? "0.1.0-dev";
-    var platformCoreConnectionString = builder.Configuration.GetConnectionString("PlatformCore")
-        ?? throw new InvalidOperationException("Connection string 'PlatformCore' is required.");
+    builder.Services
+        .AddControllers()
+        .ConfigureApiBehaviorOptions(options =>
+        {
+          options.InvalidModelStateResponseFactory = context =>
+          {
+            var detail = string.Join(
+                " ",
+                context.ModelState.Values
+                    .SelectMany(static entry => entry.Errors)
+                    .Select(static error => error.ErrorMessage)
+                    .Where(static message => !string.IsNullOrWhiteSpace(message)));
 
-    builder.Services.AddControllers();
-    builder.Services.AddPlatformCorePersistence(platformCoreConnectionString);
+            return new BadRequestObjectResult(
+                new NorthboundProblemResponse(
+                    code: "INVALID_REQUEST",
+                    title: "Некорректный формат запроса",
+                    detail: string.IsNullOrWhiteSpace(detail) ? null : detail,
+                    instance: context.HttpContext.Request.Path.Value));
+          };
+        });
+
+    builder.Services.AddPlatformCorePersistence(builder.Configuration);
+    builder.Services.AddConfiguredWarehouseTopology(builder.Configuration, builder.Environment);
+    builder.Services.AddWarehouseRouteService();
+    builder.Services.AddPayloadTransferJobService();
 
     builder.Logging.AddOpenTelemetry(options =>
     {
