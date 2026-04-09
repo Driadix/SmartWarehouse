@@ -63,12 +63,17 @@ audit
 
 Схема предназначена для материализованной копии для исполнения активной конфигурации склада, загруженной из версионируемых YAML-файлов.
 
+Минимально ожидается материализация версий топологии, уровней, узлов, рёбер, шахт, остановов шахт, станций, сервисных точек, привязок устройств и отображений внешних конечных точек.
+
 Типовые таблицы:
 
 ```text
 config.topology_versions
+config.topology_levels
 config.topology_nodes
 config.topology_edges
+config.topology_shafts
+config.topology_shaft_stops
 config.topology_stations
 config.topology_service_points
 config.device_bindings
