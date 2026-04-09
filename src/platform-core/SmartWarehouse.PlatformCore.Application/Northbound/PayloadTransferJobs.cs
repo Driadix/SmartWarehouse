@@ -176,6 +176,7 @@ public static class PayloadTransferJobContract
       state switch
       {
         JobState.Accepted => "ACCEPTED",
+        JobState.Planned => "ACCEPTED",
         JobState.InProgress => "IN_PROGRESS",
         JobState.Suspended => "SUSPENDED",
         JobState.Completed => "COMPLETED",

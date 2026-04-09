@@ -62,6 +62,105 @@ public sealed class NorthboundApiIntegrationTests
     Assert.NotNull(createdJob.PayloadRef);
     Assert.NotNull(createdJob.Attributes);
 
+    var initialPlan = await LoadPlanningSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
+
+    Assert.Equal(JobState.Planned, initialPlan.Job.State);
+    Assert.Equal(
+        [
+            "L1_LOAD_01",
+            "L1_TRAVEL_001",
+            "L1_SWITCH_A",
+            "L1_TP_LIFT_A",
+            "L1_CARRIER_A",
+            "L2_CARRIER_A",
+            "L2_TP_LIFT_A",
+            "L2_UNLOAD_01"
+        ],
+        initialPlan.RouteSegments.Select(static segment => segment.NodeId).ToArray());
+    Assert.Collection(
+        initialPlan.TaskPlans,
+        task =>
+        {
+          Assert.Equal(1, task.TaskRevision);
+          Assert.Equal(ExecutionTaskType.StationTransfer, task.TaskType);
+          Assert.Equal(ExecutionTaskState.Planned, task.State);
+          Assert.Equal("Device", task.AssigneeType);
+          Assert.Equal("SHUTTLE_01", task.AssigneeId);
+          Assert.Equal("L1_LOAD_01", task.TargetNodeId);
+          Assert.Null(task.SourceNodeId);
+          Assert.Null(task.TransferMode);
+        },
+        task =>
+        {
+          Assert.Equal(2, task.TaskRevision);
+          Assert.Equal(ExecutionTaskType.Navigate, task.TaskType);
+          Assert.Equal(ExecutionTaskState.Planned, task.State);
+          Assert.Equal("Device", task.AssigneeType);
+          Assert.Equal("SHUTTLE_01", task.AssigneeId);
+          Assert.Equal("L1_TP_LIFT_A", task.TargetNodeId);
+          Assert.Null(task.SourceNodeId);
+          Assert.Null(task.TransferMode);
+        },
+        task =>
+        {
+          Assert.Equal(3, task.TaskRevision);
+          Assert.Equal(ExecutionTaskType.CarrierTransfer, task.TaskType);
+          Assert.Equal(ExecutionTaskState.Planned, task.State);
+          Assert.Equal("Device", task.AssigneeType);
+          Assert.Equal("SHUTTLE_01", task.AssigneeId);
+          Assert.Equal("L1_TP_LIFT_A", task.SourceNodeId);
+          Assert.Equal("L2_TP_LIFT_A", task.TargetNodeId);
+          Assert.Equal(TransferMode.ShuttleRidesHybridLiftWithPayload, task.TransferMode);
+        },
+        task =>
+        {
+          Assert.Equal(4, task.TaskRevision);
+          Assert.Equal(ExecutionTaskType.Navigate, task.TaskType);
+          Assert.Equal(ExecutionTaskState.Planned, task.State);
+          Assert.Equal("Device", task.AssigneeType);
+          Assert.Equal("SHUTTLE_01", task.AssigneeId);
+          Assert.Equal("L2_UNLOAD_01", task.TargetNodeId);
+          Assert.Null(task.SourceNodeId);
+          Assert.Null(task.TransferMode);
+        },
+        task =>
+        {
+          Assert.Equal(5, task.TaskRevision);
+          Assert.Equal(ExecutionTaskType.StationTransfer, task.TaskType);
+          Assert.Equal(ExecutionTaskState.Planned, task.State);
+          Assert.Equal("Device", task.AssigneeType);
+          Assert.Equal("SHUTTLE_01", task.AssigneeId);
+          Assert.Equal("L2_UNLOAD_01", task.TargetNodeId);
+          Assert.Null(task.SourceNodeId);
+          Assert.Null(task.TransferMode);
+        });
+    Assert.Collection(
+        initialPlan.ResourceAssignments,
+        assignment =>
+        {
+          Assert.EndsWith("-01", assignment.ExecutionTaskId, StringComparison.Ordinal);
+          Assert.Equal(1, assignment.SequenceNo);
+          Assert.Equal("PARTICIPANT_01", assignment.AssignmentRole);
+          Assert.Equal("StationBoundary", assignment.ResourceType);
+          Assert.Equal("LOAD_01", assignment.ResourceId);
+        },
+        assignment =>
+        {
+          Assert.EndsWith("-03", assignment.ExecutionTaskId, StringComparison.Ordinal);
+          Assert.Equal(1, assignment.SequenceNo);
+          Assert.Equal("PARTICIPANT_01", assignment.AssignmentRole);
+          Assert.Equal("Device", assignment.ResourceType);
+          Assert.Equal("LIFT_A_DEVICE", assignment.ResourceId);
+        },
+        assignment =>
+        {
+          Assert.EndsWith("-05", assignment.ExecutionTaskId, StringComparison.Ordinal);
+          Assert.Equal(1, assignment.SequenceNo);
+          Assert.Equal("PARTICIPANT_01", assignment.AssignmentRole);
+          Assert.Equal("StationBoundary", assignment.ResourceType);
+          Assert.Equal("UNLOAD_01", assignment.ResourceId);
+        });
+
     using var getByIdResponse = await client.GetAsync($"/api/v0/payload-transfer-jobs/{createdJob.JobId}");
     Assert.Equal(HttpStatusCode.OK, getByIdResponse.StatusCode);
     var jobById = await getByIdResponse.Content.ReadFromJsonAsync<PayloadTransferJobResponse>();
@@ -83,6 +182,11 @@ public sealed class NorthboundApiIntegrationTests
     Assert.NotNull(repeatedJob);
     Assert.Equal(createdJob.JobId, repeatedJob.JobId);
     Assert.Equal(location, AssertSingleHeaderValue(repeatResponse, "Location"));
+
+    var repeatedPlan = await LoadPlanningSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
+    Assert.Equal(initialPlan.RouteSegments.Count, repeatedPlan.RouteSegments.Count);
+    Assert.Equal(initialPlan.TaskPlans.Count, repeatedPlan.TaskPlans.Count);
+    Assert.Equal(initialPlan.ResourceAssignments.Count, repeatedPlan.ResourceAssignments.Count);
 
     using var cancelResponse = await client.PostAsync($"/api/v0/payload-transfer-jobs/{createdJob.JobId}/cancel", content: null);
     Assert.Equal(HttpStatusCode.Accepted, cancelResponse.StatusCode);
@@ -255,6 +359,34 @@ public sealed class NorthboundApiIntegrationTests
     await context.SaveChangesAsync();
   }
 
+  private static async Task<PlanningSnapshot> LoadPlanningSnapshotAsync(string connectionString, string jobId)
+  {
+    await using var context = CreateContext(connectionString);
+
+    var job = await context.Set<JobRecord>()
+        .AsNoTracking()
+        .SingleAsync(record => record.JobId == jobId);
+    var routeSegments = await context.Set<JobRouteSegmentRecord>()
+        .AsNoTracking()
+        .Where(record => record.JobId == jobId)
+        .OrderBy(record => record.SequenceNo)
+        .ToListAsync();
+    var taskPlans = await context.Set<ExecutionTaskPlanRecord>()
+        .AsNoTracking()
+        .Where(record => record.JobId == jobId)
+        .OrderBy(record => record.TaskRevision)
+        .ToListAsync();
+    var taskIds = taskPlans.Select(static record => record.ExecutionTaskId).ToArray();
+    var resourceAssignments = await context.Set<ResourceAssignmentRecord>()
+        .AsNoTracking()
+        .Where(record => taskIds.Contains(record.ExecutionTaskId))
+        .OrderBy(record => record.ExecutionTaskId)
+        .ThenBy(record => record.SequenceNo)
+        .ToListAsync();
+
+    return new PlanningSnapshot(job, routeSegments, taskPlans, resourceAssignments);
+  }
+
   private static PlatformCoreDbContext CreateContext(string connectionString)
   {
     var options = new DbContextOptionsBuilder<PlatformCoreDbContext>()
@@ -332,4 +464,10 @@ public sealed class NorthboundApiIntegrationTests
 
     public string? Detail { get; set; }
   }
+
+  private sealed record PlanningSnapshot(
+      JobRecord Job,
+      IReadOnlyList<JobRouteSegmentRecord> RouteSegments,
+      IReadOnlyList<ExecutionTaskPlanRecord> TaskPlans,
+      IReadOnlyList<ResourceAssignmentRecord> ResourceAssignments);
 }

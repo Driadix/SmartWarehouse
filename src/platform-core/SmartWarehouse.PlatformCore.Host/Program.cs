@@ -49,6 +49,7 @@ public class Program
     builder.Services.AddPlatformCorePersistence(builder.Configuration);
     builder.Services.AddConfiguredWarehouseTopology(builder.Configuration, builder.Environment);
     builder.Services.AddWarehouseRouteService();
+    builder.Services.AddPayloadTransferJobPlanner();
     builder.Services.AddPayloadTransferJobService();
 
     builder.Logging.AddOpenTelemetry(options =>

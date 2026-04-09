@@ -5,6 +5,7 @@ using SmartWarehouse.PlatformCore.Application.Northbound;
 using SmartWarehouse.PlatformCore.Application.Topology;
 using SmartWarehouse.PlatformCore.Application.Wes;
 using SmartWarehouse.PlatformCore.Domain;
+using SmartWarehouse.PlatformCore.Domain.Jobs;
 using SmartWarehouse.PlatformCore.Infrastructure.Persistence;
 using SmartWarehouse.PlatformCore.Infrastructure.Persistence.Model;
 using System.Security.Cryptography;
@@ -27,7 +28,7 @@ public static class PayloadTransferJobServiceCollectionExtensions
 internal sealed class PersistencePayloadTransferJobService(
     PlatformCoreDbContext dbContext,
     CompiledWarehouseTopology topology,
-    IWarehouseRouteService routeService) : IPayloadTransferJobService
+    IPayloadTransferJobPlanner planner) : IPayloadTransferJobService
 {
   public async Task<CreatePayloadTransferJobResult> CreateAsync(
       CreatePayloadTransferJobCommand command,
@@ -59,9 +60,14 @@ internal sealed class PersistencePayloadTransferJobService(
     EnsureEndpointExists(command.SourceEndpointId, isSource: true);
     EnsureEndpointExists(command.TargetEndpointId, isSource: false);
 
+    Job plannedJob;
     try
     {
-      routeService.ResolveRoute(topology, command.SourceEndpointId, command.TargetEndpointId);
+      plannedJob = planner.Plan(
+          new SmartWarehouse.PlatformCore.Domain.Primitives.JobId($"job-{Guid.NewGuid():N}"),
+          command.SourceEndpointId,
+          command.TargetEndpointId,
+          command.Priority);
     }
     catch (NoAdmissibleRouteException)
     {
@@ -71,14 +77,14 @@ internal sealed class PersistencePayloadTransferJobService(
     var now = DateTimeOffset.UtcNow;
     var jobRecord = new JobRecord
     {
-      JobId = $"job-{Guid.NewGuid():N}",
+      JobId = plannedJob.JobId.Value,
       ClientOrderId = command.ClientOrderId,
-      JobType = JobType.PayloadTransfer,
+      JobType = plannedJob.JobType,
       PayloadId = null,
-      SourceEndpointId = command.SourceEndpointId.Value,
-      TargetEndpointId = command.TargetEndpointId.Value,
-      State = JobState.Accepted,
-      Priority = command.Priority,
+      SourceEndpointId = plannedJob.SourceEndpoint.Value,
+      TargetEndpointId = plannedJob.TargetEndpoint.Value,
+      State = plannedJob.State,
+      Priority = plannedJob.Priority,
       PayloadRef = SerializeOptionalJson(command.PayloadRef),
       Attributes = SerializeOptionalJson(command.Attributes),
       CreatedAt = now,
@@ -86,6 +92,9 @@ internal sealed class PersistencePayloadTransferJobService(
     };
 
     dbContext.Jobs.Add(jobRecord);
+    dbContext.JobRouteSegments.AddRange(CreateRouteSegmentRecords(plannedJob));
+    dbContext.ExecutionTaskPlans.AddRange(CreateExecutionTaskPlanRecords(plannedJob));
+    dbContext.ResourceAssignments.AddRange(CreateResourceAssignmentRecords(plannedJob));
     dbContext.NorthboundIdempotency.Add(new NorthboundIdempotencyRecord
     {
       ClientOrderId = command.ClientOrderId,
@@ -192,6 +201,67 @@ internal sealed class PersistencePayloadTransferJobService(
         record.ReasonCode is null ? null : new PayloadTransferJobReasonModel(record.ReasonCode, record.ReasonMessage),
         record.CompletedAt);
   }
+
+  private static IEnumerable<JobRouteSegmentRecord> CreateRouteSegmentRecords(Job job)
+  {
+    if (job.PlannedRoute is null)
+    {
+      yield break;
+    }
+
+    for (var index = 0; index < job.PlannedRoute.NodePath.Count; index++)
+    {
+      yield return new JobRouteSegmentRecord
+      {
+        JobId = job.JobId.Value,
+        SequenceNo = index + 1,
+        NodeId = job.PlannedRoute.NodePath[index].Value
+      };
+    }
+  }
+
+  private static IEnumerable<ExecutionTaskPlanRecord> CreateExecutionTaskPlanRecords(Job job)
+  {
+    for (var index = 0; index < job.ExecutionTasks.Count; index++)
+    {
+      var executionTask = job.ExecutionTasks[index];
+      yield return new ExecutionTaskPlanRecord
+      {
+        ExecutionTaskId = executionTask.TaskId.Value,
+        JobId = job.JobId.Value,
+        TaskRevision = index + 1,
+        TaskType = executionTask.TaskType,
+        State = executionTask.State,
+        AssigneeType = executionTask.Assignee.Type.ToString(),
+        AssigneeId = executionTask.Assignee.ResourceId,
+        SourceNodeId = executionTask.SourceNode?.Value,
+        TargetNodeId = executionTask.TargetNode?.Value,
+        TransferMode = executionTask.TransferMode,
+        CorrelationId = executionTask.CorrelationId.Value
+      };
+    }
+  }
+
+  private static IEnumerable<ResourceAssignmentRecord> CreateResourceAssignmentRecords(Job job)
+  {
+    foreach (var executionTask in job.ExecutionTasks)
+    {
+      for (var index = 0; index < executionTask.ParticipantRefs.Count; index++)
+      {
+        var participantRef = executionTask.ParticipantRefs[index];
+        yield return new ResourceAssignmentRecord
+        {
+          ExecutionTaskId = executionTask.TaskId.Value,
+          SequenceNo = index + 1,
+          AssignmentRole = CreateAssignmentRole(index + 1),
+          ResourceType = participantRef.Type.ToString(),
+          ResourceId = participantRef.ResourceId
+        };
+      }
+    }
+  }
+
+  private static string CreateAssignmentRole(int sequenceNo) => $"PARTICIPANT_{sequenceNo:D2}";
 
   private static string ComputeRequestHash(CreatePayloadTransferJobCommand command)
   {

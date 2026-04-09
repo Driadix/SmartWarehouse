@@ -29,6 +29,29 @@ public sealed class DomainModelTests
   }
 
   [Fact]
+  public void JobRejectsExecutionTasksForAnotherJob()
+  {
+    var executionTask = new ExecutionTask(
+        new ExecutionTaskId("task-01"),
+        new JobId("job-02"),
+        ExecutionResourceRef.ForDevice(new DeviceId("SHUTTLE_01")),
+        [],
+        ExecutionTaskType.Navigate,
+        ExecutionTaskState.Planned,
+        new CorrelationId("corr-01"),
+        targetNode: new NodeId("L1_TARGET"));
+
+    Assert.Throws<ArgumentException>(() => new Job(
+        new JobId("job-01"),
+        JobType.PayloadTransfer,
+        new EndpointId("inbound.main"),
+        new EndpointId("outbound.main"),
+        JobState.Planned,
+        JobPriority.Normal,
+        executionTasks: [executionTask]));
+  }
+
+  [Fact]
   public void PlannedRouteRequiresAtLeastOneNode()
   {
     Assert.Throws<ArgumentException>(() => new PlannedRoute([]));
