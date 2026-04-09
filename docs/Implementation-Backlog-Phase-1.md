@@ -49,7 +49,7 @@
 | `status` | `BACKLOG` |
 | `startedAt` | — |
 | `owner` | — |
-| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-020`. |
+| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-021`. |
 
 ---
 
@@ -82,6 +82,7 @@
 | 2026-04-09 | `P1-017` | Реализована атомарная публикация верхних событий `JobAccepted` и `JobStateChanged`. | Create/cancel flow теперь одновременно записывает канонические события в `integration.outbox_messages` и `audit.platform_event_journal`, идемпотентные повторы не создают второй `JobAccepted`, а integration-проверки фиксируют состав и порядок событий. |
 | 2026-04-09 | `P1-018` | Реализованы runtime-модель `ExecutionTask` и минимальный persistence-процессор `WCS` с подтверждённой state machine. | В домене появился `ExecutionTaskRuntime` с переходами `Planned -> InProgress/Suspended/Failed/Cancelled` и `Suspended -> InProgress/Completed/Failed/Cancelled`, `wcs.execution_task_runtime` расширена полями участников и контекста перехода, а unit/integration-тесты фиксируют идемпотентный `SubmitExecutionTask` и безопасную отмену. |
 | 2026-04-09 | `P1-019` | Реализованы persistence-хранилища runtime-состояния `WCS` для `device_sessions`, `device_shadows`, `faults`, `station_boundary_state`, `reservations`. | В `Application` появился `IWcsOperationalStateStore`, а `Infrastructure` хранит и читает runtime-состояние только из `wcs`-схемы; `device_shadows` и `station_boundary_state` идемпотентно инициализируются из compiled topology, тогда как `device_sessions`, `faults` и `reservations` остаются чисто операционными таблицами без смешения с `wes`. |
+| 2026-04-09 | `P1-020` | Реализован materializer `Navigate` с коротким `GrantMotionWindow` и публикацией нижней команды через `integration.outbox_messages`. | `WCS` теперь для `Navigate` вычисляет короткое окно до ближайшей конфликтной точки или до `targetNode`, резервирует авторизованный участок в `wcs.reservations`, переводит runtime в `MotionAuthorized`, а при немедленной блокировке корректно приостанавливает шаг с `WAIT_AND_RETRY`; транспортная привязка к `NATS` остаётся следующей задачей. |
 
 ---
 
@@ -141,7 +142,7 @@
 |---|---|---|---|---|---|
 | `P1-018` | `platform-core/wcs` | Реализовать runtime-модель `ExecutionTask` и её state machine. | `DONE` | `P1-001`, `P1-004`, `P1-006` | `ExecutionTask` имеет подтверждённые переходы `InProgress`, `Completed`, `Suspended`, `Failed`, `Cancelled`. |
 | `P1-019` | `platform-core/wcs` | Реализовать хранилища `device_sessions`, `device_shadows`, `faults`, `station_boundary_state`, `reservations`. | `DONE` | `P1-006`, `P1-018` | `WCS` имеет собственную модель исполнения без смешения с `wes`-схемой. |
-| `P1-020` | `platform-core/wcs` | Реализовать materializer для `Navigate` с коротким `GrantMotionWindow` до следующей конфликтной точки. | `BACKLOG` | `P1-018`, `P1-019` | `Navigate` исполняется по нормативной семантике `Execution-Semantics-v0`. |
+| `P1-020` | `platform-core/wcs` | Реализовать materializer для `Navigate` с коротким `GrantMotionWindow` до следующей конфликтной точки. | `DONE` | `P1-018`, `P1-019` | `Navigate` исполняется по нормативной семантике `Execution-Semantics-v0`. |
 | `P1-021` | `platform-core/wcs` | Реализовать materializer для `StationTransfer` пассивной станции через readiness и подтверждённый факт передачи. | `BACKLOG` | `P1-018`, `P1-019` | `NodeReached` не завершает шаг без `PayloadCustodyChanged`. |
 | `P1-022` | `platform-core/wcs` | Реализовать materializer для `CarrierTransfer` в режиме `SHUTTLE_RIDES_HYBRID_LIFT_WITH_PAYLOAD`. | `BACKLOG` | `P1-018`, `P1-019` | Межуровневая передача отрабатывает через `PrepareTransfer`, `MoveCarrier`, `CommitTransfer` и подтверждённые постусловия. |
 | `P1-023` | `platform-core/wcs` | Реализовать обработку канонических фактов `NodeReached`, `TransferCommitted`, `TransferAborted`, `CapabilityChanged`, `FaultRaised`, `FaultCleared`. | `BACKLOG` | `P1-020`, `P1-021`, `P1-022` | `WCS` обновляет состояние только по подтверждённым фактам. |
@@ -209,4 +210,4 @@
 
 - Мягкий архитектурный риск на старте: `DomainModel-v0` пока имеет статус draft, поэтому `P1-001` желательно закрыть первым.
 - Отсутствие кода в `digital-twin-ui` и `edge-integration-host` не блокирует старт ядра, но эти контуры нельзя забывать при стабилизации фазы 1.
-- После закрытия `P1-019` следующий рекомендуемый шаг — `P1-020`: реализовать materializer `Navigate` с коротким `GrantMotionWindow` до следующей конфликтной точки.
+- После закрытия `P1-020` следующий рекомендуемый шаг — `P1-021`: реализовать materializer `StationTransfer` пассивной станции через readiness и подтверждённый факт передачи.

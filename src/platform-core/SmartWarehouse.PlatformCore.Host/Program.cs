@@ -53,6 +53,7 @@ public class Program
     builder.Services.AddPayloadTransferJobPlanner();
     builder.Services.AddPayloadTransferJobService();
     builder.Services.AddPersistenceWcsOperationalStateStore();
+    builder.Services.AddPersistenceWcsNavigateTaskMaterialization();
 
     builder.Logging.AddOpenTelemetry(options =>
     {
