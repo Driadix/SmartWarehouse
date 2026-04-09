@@ -99,6 +99,16 @@ public sealed class PlatformCoreDbContextModelTests
     AssertProperty(job, nameof(JobRecord.UpdatedAt));
     AssertProperty(job, nameof(JobRecord.CompletedAt));
     AssertIndex(job, isUnique: true, nameof(JobRecord.ClientOrderId));
+
+    var payloadTransferJobProjection = AssertEntity<PayloadTransferJobProjectionRecord>(context);
+    AssertProperty(payloadTransferJobProjection, nameof(PayloadTransferJobProjectionRecord.ClientOrderId), maxLength: 128);
+    AssertProperty(payloadTransferJobProjection, nameof(PayloadTransferJobProjectionRecord.PayloadRef), columnType: "jsonb");
+    AssertProperty(payloadTransferJobProjection, nameof(PayloadTransferJobProjectionRecord.Attributes), columnType: "jsonb");
+    AssertProperty(payloadTransferJobProjection, nameof(PayloadTransferJobProjectionRecord.ReasonCode), maxLength: 128);
+    AssertProperty(payloadTransferJobProjection, nameof(PayloadTransferJobProjectionRecord.ReasonMessage), maxLength: 1024);
+    AssertProperty(payloadTransferJobProjection, nameof(PayloadTransferJobProjectionRecord.CreatedAt));
+    AssertProperty(payloadTransferJobProjection, nameof(PayloadTransferJobProjectionRecord.CompletedAt));
+    AssertIndex(payloadTransferJobProjection, isUnique: true, nameof(PayloadTransferJobProjectionRecord.ClientOrderId));
   }
 
   [Fact]

@@ -49,7 +49,7 @@
 | `status` | `BACKLOG` |
 | `startedAt` | — |
 | `owner` | — |
-| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-016`. |
+| `notes` | Текущая задача ещё не назначена. Рекомендуемый старт: `P1-017`. |
 
 ---
 
@@ -78,6 +78,7 @@
 | 2026-04-09 | `P1-013` | Реализован исполняемый HTTP-контракт `Northbound API v0` для `PayloadTransferJob`. | В `platform-core/host` появились endpoints `POST job`, `GET by jobId`, `GET by clientOrderId`, `POST cancel`, единый `Problem`-payload и загрузка активной `Topology Configuration` из фазового YAML; интеграционные тесты поднимают реальный HTTP runtime и подтверждают nominal-сценарий, чтение, отмену и нормативные отрицательные ответы. |
 | 2026-04-09 | `P1-014` | Реализованы нормализация тела и идемпотентность по `clientOrderId`. | `Northbound` create-flow теперь вычисляет нормализованный hash тела, использует `integration.northbound_idempotency`, возвращает `200 OK` и тот же `jobId` для эквивалентного повторного запроса, а конфликтный повтор отклоняет с `409 IDEMPOTENCY_CONFLICT`; это закреплено integration-проверками на работающем приложении. |
 | 2026-04-09 | `P1-015` | Реализованы `Job` aggregate и planner `WES`, который режет маршрут на `Navigate`, `StationTransfer`, `CarrierTransfer`. | После принятия `PayloadTransferJob` в `wes` теперь атомарно сохраняются `jobs`, `job_route_segments`, `execution_task_plans` и `resource_assignments`; planner строит канонический план по compiled topology, а внешнее состояние API остаётся `ACCEPTED` до подтверждённого старта исполнения. |
+| 2026-04-09 | `P1-016` | Реализована проекция `projection.payload_transfer_jobs` и чтение `Northbound API` только из неё. | Create/cancel flow синхронно обновляет read-model в схеме `projection`, добавлена миграция на поля контракта `Northbound API v0`, а integration-проверки подтверждают, что `GET by jobId` и `GET by clientOrderId` читают проекцию, а не прямую модель записи `wes.jobs`. |
 
 ---
 
@@ -128,7 +129,7 @@
 | `P1-013` | `platform-core/northbound` | Реализовать HTTP-операции `POST job`, `GET by jobId`, `GET by clientOrderId`, `POST cancel`. | `DONE` | `P1-012` | `Northbound API v0` доступен как исполняемый HTTP-контракт. |
 | `P1-014` | `platform-core/northbound` | Реализовать нормализацию тела и идемпотентность по `clientOrderId`. | `DONE` | `P1-013`, `P1-006` | Повтор эквивалентного запроса возвращает тот же `jobId`, конфликтный повтор даёт `409`. |
 | `P1-015` | `platform-core/wes` | Реализовать `Job` aggregate и planner, который режет маршрут на `Navigate`, `StationTransfer`, `CarrierTransfer`. | `DONE` | `P1-012`, `P1-013` | После принятия задания создаётся план из канонических `ExecutionTask`. |
-| `P1-016` | `platform-core/projection` | Реализовать проекцию `projection.payload_transfer_jobs` и чтение API только из неё. | `BACKLOG` | `P1-013`, `P1-014`, `P1-015` | Чтение состояния задания не опирается на прямое чтение модели записи `WES`. |
+| `P1-016` | `platform-core/projection` | Реализовать проекцию `projection.payload_transfer_jobs` и чтение API только из неё. | `DONE` | `P1-013`, `P1-014`, `P1-015` | Чтение состояния задания не опирается на прямое чтение модели записи `WES`. |
 | `P1-017` | `platform-core/events` | Реализовать публикацию `JobAccepted` и `JobStateChanged` в `outbox` и `audit.platform_event_journal`. | `BACKLOG` | `P1-015`, `P1-016` | Верхние события публикуются атомарно вместе с изменением состояния. |
 
 ### 6.5. Контур исполнения `WCS`
@@ -205,4 +206,4 @@
 
 - Мягкий архитектурный риск на старте: `DomainModel-v0` пока имеет статус draft, поэтому `P1-001` желательно закрыть первым.
 - Отсутствие кода в `digital-twin-ui` и `edge-integration-host` не блокирует старт ядра, но эти контуры нельзя забывать при стабилизации фазы 1.
-- После закрытия `P1-015` следующий рекомендуемый шаг — `P1-016`: реализовать проекцию `projection.payload_transfer_jobs` и перевести чтение `Northbound API` только на неё.
+- После закрытия `P1-016` следующий рекомендуемый шаг — `P1-017`: реализовать публикацию `JobAccepted` и `JobStateChanged` в `outbox` и `audit.platform_event_journal`.

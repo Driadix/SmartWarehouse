@@ -61,10 +61,26 @@ public sealed class NorthboundApiIntegrationTests
     Assert.Equal("NORMAL", createdJob.Priority);
     Assert.NotNull(createdJob.PayloadRef);
     Assert.NotNull(createdJob.Attributes);
+    Assert.Null(createdJob.CompletedAt);
 
     var initialPlan = await LoadPlanningSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
+    var initialProjection = await LoadProjectionSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
 
     Assert.Equal(JobState.Planned, initialPlan.Job.State);
+    Assert.Equal(JobState.Planned, initialProjection.State);
+    Assert.Equal("WMS-12345", initialProjection.ClientOrderId);
+    Assert.Equal("inbound.main", initialProjection.SourceEndpointId);
+    Assert.Equal("outbound.main", initialProjection.TargetEndpointId);
+    Assert.Equal(JobPriority.Normal, initialProjection.Priority);
+    Assert.Equal(initialPlan.Job.CreatedAt, initialProjection.CreatedAt);
+    Assert.Equal(initialPlan.Job.UpdatedAt, initialProjection.LastUpdatedAt);
+    Assert.Null(initialProjection.CompletedAt);
+    Assert.Equal(
+        "SSCC-001",
+        JsonDocument.Parse(initialProjection.PayloadRef!).RootElement.GetProperty("clientPayloadId").GetString());
+    Assert.Equal(
+        "BATCH-01",
+        JsonDocument.Parse(initialProjection.Attributes!).RootElement.GetProperty("batchId").GetString());
     Assert.Equal(
         [
             "L1_LOAD_01",
@@ -184,9 +200,12 @@ public sealed class NorthboundApiIntegrationTests
     Assert.Equal(location, AssertSingleHeaderValue(repeatResponse, "Location"));
 
     var repeatedPlan = await LoadPlanningSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
+    var repeatedProjection = await LoadProjectionSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
     Assert.Equal(initialPlan.RouteSegments.Count, repeatedPlan.RouteSegments.Count);
     Assert.Equal(initialPlan.TaskPlans.Count, repeatedPlan.TaskPlans.Count);
     Assert.Equal(initialPlan.ResourceAssignments.Count, repeatedPlan.ResourceAssignments.Count);
+    Assert.Equal(initialProjection.CreatedAt, repeatedProjection.CreatedAt);
+    Assert.Equal(initialProjection.LastUpdatedAt, repeatedProjection.LastUpdatedAt);
 
     using var cancelResponse = await client.PostAsync($"/api/v0/payload-transfer-jobs/{createdJob.JobId}/cancel", content: null);
     Assert.Equal(HttpStatusCode.Accepted, cancelResponse.StatusCode);
@@ -196,6 +215,10 @@ public sealed class NorthboundApiIntegrationTests
     Assert.Equal(createdJob.JobId, cancelledJob.JobId);
     Assert.Equal("CANCELLED", cancelledJob.State);
     Assert.NotNull(cancelledJob.CompletedAt);
+
+    var cancelledProjection = await LoadProjectionSnapshotAsync(environment.PlatformCoreConnectionString, createdJob.JobId);
+    Assert.Equal(JobState.Cancelled, cancelledProjection.State);
+    Assert.NotNull(cancelledProjection.CompletedAt);
 
     using var repeatCancelResponse = await client.PostAsync($"/api/v0/payload-transfer-jobs/{createdJob.JobId}/cancel", content: null);
     Assert.Equal(HttpStatusCode.OK, repeatCancelResponse.StatusCode);
@@ -299,6 +322,75 @@ public sealed class NorthboundApiIntegrationTests
   }
 
   [Fact]
+  public async Task GetEndpointsReadFromProjectionInsteadOfWesWriteModel()
+  {
+    await using var environment = await _harness.CreateEnvironmentAsync();
+    await ApplyMigrationsAsync(environment.PlatformCoreConnectionString);
+
+    const string jobId = "job-projection-01";
+    const string clientOrderId = "WMS-PROJECTION-01";
+    var createdAt = DateTimeOffset.UtcNow.AddMinutes(-10);
+    var updatedAt = DateTimeOffset.UtcNow.AddMinutes(-2);
+
+    await SeedJobAsync(
+        environment.PlatformCoreConnectionString,
+        new JobRecord
+        {
+          JobId = jobId,
+          ClientOrderId = clientOrderId,
+          JobType = JobType.PayloadTransfer,
+          SourceEndpointId = "inbound.main",
+          TargetEndpointId = "outbound.main",
+          State = JobState.Cancelled,
+          Priority = JobPriority.High,
+          CreatedAt = createdAt,
+          UpdatedAt = updatedAt,
+          CompletedAt = updatedAt
+        });
+    await SeedProjectionAsync(
+        environment.PlatformCoreConnectionString,
+        new PayloadTransferJobProjectionRecord
+        {
+          JobId = jobId,
+          ClientOrderId = clientOrderId,
+          JobType = JobType.PayloadTransfer,
+          SourceEndpointId = "inbound.main",
+          TargetEndpointId = "outbound.main",
+          State = JobState.Planned,
+          Priority = JobPriority.Low,
+          PayloadRef = """{"clientPayloadId":"P-001"}""",
+          Attributes = """{"batchId":"B-001"}""",
+          CreatedAt = createdAt,
+          LastUpdatedAt = updatedAt
+        });
+
+    await using var factory = CreateFactory(environment, "warehouse-a.nominal.yaml");
+    using var client = factory.CreateClient();
+
+    using var getByIdResponse = await client.GetAsync($"/api/v0/payload-transfer-jobs/{jobId}");
+    Assert.Equal(HttpStatusCode.OK, getByIdResponse.StatusCode);
+    var jobById = await getByIdResponse.Content.ReadFromJsonAsync<PayloadTransferJobResponse>();
+
+    Assert.NotNull(jobById);
+    Assert.Equal(jobId, jobById.JobId);
+    Assert.Equal(clientOrderId, jobById.ClientOrderId);
+    Assert.Equal("ACCEPTED", jobById.State);
+    Assert.Equal("LOW", jobById.Priority);
+    Assert.NotNull(jobById.PayloadRef);
+    Assert.NotNull(jobById.Attributes);
+    Assert.Null(jobById.CompletedAt);
+
+    using var getByClientOrderResponse = await client.GetAsync($"/api/v0/payload-transfer-jobs/by-client-order/{clientOrderId}");
+    Assert.Equal(HttpStatusCode.OK, getByClientOrderResponse.StatusCode);
+    var jobByClientOrder = await getByClientOrderResponse.Content.ReadFromJsonAsync<PayloadTransferJobResponse>();
+
+    Assert.NotNull(jobByClientOrder);
+    Assert.Equal(jobId, jobByClientOrder.JobId);
+    Assert.Equal("ACCEPTED", jobByClientOrder.State);
+    Assert.Equal("LOW", jobByClientOrder.Priority);
+  }
+
+  [Fact]
   public async Task CancelReturnsConflictForCompletedJob()
   {
     await using var environment = await _harness.CreateEnvironmentAsync();
@@ -359,6 +451,13 @@ public sealed class NorthboundApiIntegrationTests
     await context.SaveChangesAsync();
   }
 
+  private static async Task SeedProjectionAsync(string connectionString, PayloadTransferJobProjectionRecord projectionRecord)
+  {
+    await using var context = CreateContext(connectionString);
+    context.Add(projectionRecord);
+    await context.SaveChangesAsync();
+  }
+
   private static async Task<PlanningSnapshot> LoadPlanningSnapshotAsync(string connectionString, string jobId)
   {
     await using var context = CreateContext(connectionString);
@@ -385,6 +484,15 @@ public sealed class NorthboundApiIntegrationTests
         .ToListAsync();
 
     return new PlanningSnapshot(job, routeSegments, taskPlans, resourceAssignments);
+  }
+
+  private static async Task<PayloadTransferJobProjectionRecord> LoadProjectionSnapshotAsync(string connectionString, string jobId)
+  {
+    await using var context = CreateContext(connectionString);
+
+    return await context.Set<PayloadTransferJobProjectionRecord>()
+        .AsNoTracking()
+        .SingleAsync(record => record.JobId == jobId);
   }
 
   private static PlatformCoreDbContext CreateContext(string connectionString)

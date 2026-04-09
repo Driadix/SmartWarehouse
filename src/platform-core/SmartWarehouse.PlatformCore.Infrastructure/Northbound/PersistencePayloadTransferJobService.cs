@@ -48,8 +48,8 @@ internal sealed class PersistencePayloadTransferJobService(
         throw CreateIdempotencyConflict();
       }
 
-      var existingJob = await FindJobByIdAsync(existingRegistration.JobId, cancellationToken);
-      return new CreatePayloadTransferJobResult(MapToModel(existingJob), isIdempotentReplay: true);
+      var existingProjection = await FindProjectionByJobIdAsync(existingRegistration.JobId, cancellationToken);
+      return new CreatePayloadTransferJobResult(MapToModel(existingProjection), isIdempotentReplay: true);
     }
 
     if (command.SourceEndpointId == command.TargetEndpointId)
@@ -90,8 +90,10 @@ internal sealed class PersistencePayloadTransferJobService(
       CreatedAt = now,
       UpdatedAt = now
     };
+    var projectionRecord = CreateProjectionRecord(jobRecord);
 
     dbContext.Jobs.Add(jobRecord);
+    dbContext.PayloadTransferJobs.Add(projectionRecord);
     dbContext.JobRouteSegments.AddRange(CreateRouteSegmentRecords(plannedJob));
     dbContext.ExecutionTaskPlans.AddRange(CreateExecutionTaskPlanRecords(plannedJob));
     dbContext.ResourceAssignments.AddRange(CreateResourceAssignmentRecords(plannedJob));
@@ -105,15 +107,15 @@ internal sealed class PersistencePayloadTransferJobService(
 
     await dbContext.SaveChangesAsync(cancellationToken);
 
-    return new CreatePayloadTransferJobResult(MapToModel(jobRecord), isIdempotentReplay: false);
+    return new CreatePayloadTransferJobResult(MapToModel(projectionRecord), isIdempotentReplay: false);
   }
 
   public async Task<PayloadTransferJobModel> GetByJobIdAsync(
       string jobId,
       CancellationToken cancellationToken = default)
   {
-    var jobRecord = await FindJobByIdAsync(jobId, cancellationToken);
-    return MapToModel(jobRecord);
+    var projectionRecord = await FindProjectionByJobIdAsync(jobId, cancellationToken);
+    return MapToModel(projectionRecord);
   }
 
   public async Task<PayloadTransferJobModel> GetByClientOrderIdAsync(
@@ -121,12 +123,12 @@ internal sealed class PersistencePayloadTransferJobService(
       CancellationToken cancellationToken = default)
   {
     var normalizedClientOrderId = NormalizeRequired(clientOrderId, nameof(clientOrderId));
-    var jobRecord = await dbContext.Jobs
+    var projectionRecord = await dbContext.PayloadTransferJobs
         .AsNoTracking()
         .SingleOrDefaultAsync(record => record.ClientOrderId == normalizedClientOrderId, cancellationToken);
 
-    return jobRecord is not null
-        ? MapToModel(jobRecord)
+    return projectionRecord is not null
+        ? MapToModel(projectionRecord)
         : throw CreateJobNotFound();
   }
 
@@ -143,9 +145,19 @@ internal sealed class PersistencePayloadTransferJobService(
       throw CreateJobNotFound();
     }
 
+    var projectionRecord = await dbContext.PayloadTransferJobs
+        .SingleOrDefaultAsync(record => record.JobId == normalizedJobId, cancellationToken);
+    if (projectionRecord is null)
+    {
+      projectionRecord = CreateProjectionRecord(jobRecord);
+      dbContext.PayloadTransferJobs.Add(projectionRecord);
+    }
+
     if (jobRecord.State == JobState.Cancelled)
     {
-      return new CancelPayloadTransferJobResult(MapToModel(jobRecord), wasAlreadyCancelled: true);
+      ApplyProjectionState(jobRecord, projectionRecord);
+      await dbContext.SaveChangesAsync(cancellationToken);
+      return new CancelPayloadTransferJobResult(MapToModel(projectionRecord), wasAlreadyCancelled: true);
     }
 
     if (jobRecord.State is JobState.Completed or JobState.Failed)
@@ -157,10 +169,11 @@ internal sealed class PersistencePayloadTransferJobService(
     jobRecord.State = JobState.Cancelled;
     jobRecord.UpdatedAt = now;
     jobRecord.CompletedAt ??= now;
+    ApplyProjectionState(jobRecord, projectionRecord);
 
     await dbContext.SaveChangesAsync(cancellationToken);
 
-    return new CancelPayloadTransferJobResult(MapToModel(jobRecord), wasAlreadyCancelled: false);
+    return new CancelPayloadTransferJobResult(MapToModel(projectionRecord), wasAlreadyCancelled: false);
   }
 
   private void EnsureEndpointExists(SmartWarehouse.PlatformCore.Domain.Primitives.EndpointId endpointId, bool isSource)
@@ -173,33 +186,75 @@ internal sealed class PersistencePayloadTransferJobService(
     throw isSource ? CreateUnknownSourceEndpoint() : CreateUnknownTargetEndpoint();
   }
 
-  private async Task<JobRecord> FindJobByIdAsync(string jobId, CancellationToken cancellationToken)
+  private async Task<PayloadTransferJobProjectionRecord> FindProjectionByJobIdAsync(string jobId, CancellationToken cancellationToken)
   {
     var normalizedJobId = NormalizeRequired(jobId, nameof(jobId));
-    var jobRecord = await dbContext.Jobs
+    var projectionRecord = await dbContext.PayloadTransferJobs
         .AsNoTracking()
         .SingleOrDefaultAsync(record => record.JobId == normalizedJobId, cancellationToken);
 
-    return jobRecord ?? throw CreateJobNotFound();
+    return projectionRecord ?? throw CreateJobNotFound();
   }
 
-  private static PayloadTransferJobModel MapToModel(JobRecord record)
+  private static PayloadTransferJobModel MapToModel(PayloadTransferJobProjectionRecord record)
   {
     ArgumentNullException.ThrowIfNull(record);
 
     return new PayloadTransferJobModel(
         record.JobId,
-        record.ClientOrderId,
+        record.ClientOrderId ?? throw new InvalidOperationException(
+            $"Payload transfer job projection '{record.JobId}' does not contain client order identifier."),
         PayloadTransferJobContract.ToExternalState(record.State),
         record.SourceEndpointId,
         record.TargetEndpointId,
         PayloadTransferJobContract.ToExternalPriority(record.Priority),
         record.CreatedAt,
-        record.UpdatedAt,
+        record.LastUpdatedAt,
         DeserializeOptionalJson(record.PayloadRef),
         DeserializeOptionalJson(record.Attributes),
         record.ReasonCode is null ? null : new PayloadTransferJobReasonModel(record.ReasonCode, record.ReasonMessage),
         record.CompletedAt);
+  }
+
+  private static PayloadTransferJobProjectionRecord CreateProjectionRecord(JobRecord jobRecord)
+  {
+    ArgumentNullException.ThrowIfNull(jobRecord);
+
+    var projectionRecord = new PayloadTransferJobProjectionRecord
+    {
+      JobId = jobRecord.JobId,
+      ClientOrderId = jobRecord.ClientOrderId,
+      JobType = jobRecord.JobType,
+      PayloadId = jobRecord.PayloadId,
+      SourceEndpointId = jobRecord.SourceEndpointId,
+      TargetEndpointId = jobRecord.TargetEndpointId,
+      PayloadRef = jobRecord.PayloadRef,
+      Attributes = jobRecord.Attributes,
+      CreatedAt = jobRecord.CreatedAt
+    };
+
+    ApplyProjectionState(jobRecord, projectionRecord);
+    return projectionRecord;
+  }
+
+  private static void ApplyProjectionState(JobRecord jobRecord, PayloadTransferJobProjectionRecord projectionRecord)
+  {
+    ArgumentNullException.ThrowIfNull(jobRecord);
+    ArgumentNullException.ThrowIfNull(projectionRecord);
+
+    projectionRecord.ClientOrderId = jobRecord.ClientOrderId;
+    projectionRecord.JobType = jobRecord.JobType;
+    projectionRecord.PayloadId = jobRecord.PayloadId;
+    projectionRecord.SourceEndpointId = jobRecord.SourceEndpointId;
+    projectionRecord.TargetEndpointId = jobRecord.TargetEndpointId;
+    projectionRecord.State = jobRecord.State;
+    projectionRecord.Priority = jobRecord.Priority;
+    projectionRecord.PayloadRef = jobRecord.PayloadRef;
+    projectionRecord.Attributes = jobRecord.Attributes;
+    projectionRecord.ReasonCode = jobRecord.ReasonCode;
+    projectionRecord.ReasonMessage = jobRecord.ReasonMessage;
+    projectionRecord.LastUpdatedAt = jobRecord.UpdatedAt;
+    projectionRecord.CompletedAt = jobRecord.CompletedAt;
   }
 
   private static IEnumerable<JobRouteSegmentRecord> CreateRouteSegmentRecords(Job job)

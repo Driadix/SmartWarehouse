@@ -22,9 +22,21 @@ public sealed class PayloadTransferJobProjectionRecord
 
   public JobPriority Priority { get; set; }
 
+  public string? PayloadRef { get; set; }
+
+  public string? Attributes { get; set; }
+
+  public string? ReasonCode { get; set; }
+
+  public string? ReasonMessage { get; set; }
+
+  public DateTimeOffset CreatedAt { get; set; }
+
   public string? LastExecutionTaskId { get; set; }
 
   public DateTimeOffset LastUpdatedAt { get; set; }
+
+  public DateTimeOffset? CompletedAt { get; set; }
 }
 
 public sealed class DigitalTwinDeviceProjectionRecord
@@ -114,6 +126,10 @@ internal static class ProjectionSchemaModel
       builder.Property(x => x.TargetEndpointId).HasMaxLength(128);
       builder.Property(x => x.State).HasConversion<string>().HasMaxLength(32);
       builder.Property(x => x.Priority).HasConversion<string>().HasMaxLength(32);
+      builder.Property(x => x.PayloadRef).HasColumnType("jsonb");
+      builder.Property(x => x.Attributes).HasColumnType("jsonb");
+      builder.Property(x => x.ReasonCode).HasMaxLength(128);
+      builder.Property(x => x.ReasonMessage).HasMaxLength(1024);
       builder.Property(x => x.LastExecutionTaskId).HasMaxLength(128);
 
       builder.HasIndex(x => x.ClientOrderId).IsUnique();
