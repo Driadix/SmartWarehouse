@@ -55,6 +55,7 @@ public class Program
     builder.Services.AddPersistenceWcsOperationalStateStore();
     builder.Services.AddPersistenceWcsNavigateTaskMaterialization();
     builder.Services.AddPersistenceWcsStationTransferTaskMaterialization();
+    builder.Services.AddPersistenceWcsCarrierTransferTaskMaterialization();
 
     builder.Logging.AddOpenTelemetry(options =>
     {
